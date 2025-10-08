@@ -1,9 +1,6 @@
 import React from "react";
 import {
   Box,
-  Modal,
-  Card,
-  CardContent,
   Typography,
   Button,
   LinearProgress,

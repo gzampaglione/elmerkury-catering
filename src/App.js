@@ -1,6 +1,14 @@
 import React, { useState } from "react";
 import { ThemeProvider } from "@mui/material/styles";
-import { Box, Paper, Typography, Divider, Button } from "@mui/material";
+import {
+  Box,
+  Paper,
+  Typography,
+  Divider,
+  Button,
+  Card,
+  CardContent,
+} from "@mui/material"; // Added Card and CardContent
 import MainLayout from "./components/MainLayout";
 import Homepage from "./pages/Homepage";
 import ProcessOrderStep1 from "./pages/ProcessOrder/ProcessOrderStep1";
@@ -14,7 +22,7 @@ import SettingsPage from "./pages/SettingsPage";
 import CalendarView from "./pages/CalendarView";
 import { DUMMY_DATA } from "./data/dummyData";
 import { theme } from "./theme";
-import { CheckCircle } from "@mui/icons-material";
+import { CheckCircle, Email as EmailIcon } from "@mui/icons-material"; // Renamed Email to EmailIcon to avoid conflict
 
 const EmailDraft = ({ to, subject, body }) => (
   <Card variant="outlined">
@@ -54,7 +62,7 @@ const ProcessOrderConfirmation = ({ setView, order, openEmail }) => (
     <Button
       fullWidth
       variant="contained"
-      startIcon={<Email />}
+      startIcon={<EmailIcon />}
       sx={{ my: 2 }}
       onClick={openEmail}
     >

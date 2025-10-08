@@ -15,7 +15,7 @@ import { ExpandMore, Edit, Block, Update } from "@mui/icons-material";
 import BackButton from "../components/BackButton";
 
 const EditOrderScreen = ({ setView, order: initialOrder, customer }) => {
-  const [order, setOrder] = useState(initialOrder);
+  const [order] = useState(initialOrder); // Removed unused setOrder
   return (
     <>
       <BackButton onClick={() => setView("editOrderSelect")}>Cancel</BackButton>

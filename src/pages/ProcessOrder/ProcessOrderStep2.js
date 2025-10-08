@@ -17,18 +17,21 @@ import {
   AccordionSummary,
   AccordionDetails,
   Button,
+  Chip,
 } from "@mui/material";
 import {
   Edit,
   Info,
   RemoveCircleOutline,
   ExpandMore,
+  ArrowForwardIos,
 } from "@mui/icons-material";
 import BackButton from "../../components/BackButton";
 import SectionHeader from "../../components/SectionHeader";
 
 const ProcessOrderStep2 = ({ setView, order: initialOrder, customer }) => {
-  const [order, setOrder] = useState(initialOrder);
+  const [order] = useState(initialOrder);
+  const [setEditingFee] = useState(null);
 
   const subtotal = order.items.reduce(
     (acc, item) => acc + item.qty * item.unitPrice,
@@ -52,6 +55,7 @@ const ProcessOrderStep2 = ({ setView, order: initialOrder, customer }) => {
   const grossProfit = subtotal - totalFoodCost - totalLaborCost;
   const estProfit = grossProfit - parseFloat(order.deliveryFee || 0);
   const estProfitPercent = (estProfit / subtotal) * 100 || 0;
+  const netProfit = estProfit; // Alias for consistency
 
   return (
     <>
@@ -124,6 +128,9 @@ const ProcessOrderStep2 = ({ setView, order: initialOrder, customer }) => {
                       sx={{ pl: 2, m: 0 }}
                     >
                       <li>Ingredients: {item.ingredients.join(", ")}</li>
+                      <li>
+                        Est. Labor: {(item.estLaborHours * 60).toFixed(0)} mins
+                      </li>
                     </Typography>
                   </Grid>
                   <Grid item xs={7}>
@@ -135,12 +142,11 @@ const ProcessOrderStep2 = ({ setView, order: initialOrder, customer }) => {
                     </Typography>
                   </Grid>
                   <Grid item xs={7}>
-                    <Typography variant="caption">Est Labor:</Typography>
+                    <Typography variant="caption">Est Labor Cost:</Typography>
                   </Grid>
                   <Grid item xs={5} textAlign="right">
                     <Typography variant="caption">
-                      {item.estLaborHours * 60} min / $
-                      {item.qty * (item.estLaborHours * 25).toFixed(2)}
+                      ${(item.qty * (item.estLaborHours * 25)).toFixed(2)}
                     </Typography>
                   </Grid>
                   <Grid item xs={7}>
@@ -191,7 +197,7 @@ const ProcessOrderStep2 = ({ setView, order: initialOrder, customer }) => {
             <Typography>Tip</Typography>
           </Grid>
           <Grid item xs={2} textAlign="right">
-            <IconButton size="small">
+            <IconButton size="small" onClick={() => setEditingFee("tip")}>
               <Edit fontSize="inherit" />
             </IconButton>
           </Grid>
