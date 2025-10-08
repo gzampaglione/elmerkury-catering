@@ -14,7 +14,7 @@ import Homepage from "./pages/Homepage";
 import ProcessOrderStep1 from "./pages/ProcessOrder/ProcessOrderStep1";
 import ProcessOrderStep2 from "./pages/ProcessOrder/ProcessOrderStep2";
 import ProcessOrderStep3 from "./pages/ProcessOrder/ProcessOrderStep3";
-import ProcessSatelliteOrder from "./pages/ProcessOrder/ProcessSatelliteOrder";
+import SatelliteOrderPage from "./components/SatelliteOrder/SatelliteOrderPage";
 import GenerateProposalStep1 from "./pages/GenerateProposal/GenerateProposalStep1";
 import GenerateProposalStep2 from "./pages/GenerateProposal/GenerateProposalStep2";
 import POTrackingQueue from "./pages/POTrackingQueue";
@@ -190,13 +190,16 @@ const App = () => {
             handleProcessOrder={handleProcessOrder}
           />
         );
+
       case "processSatelliteOrder":
         return (
-          <ProcessSatelliteOrder
+          <SatelliteOrderPage
             setView={setView}
             handleProcessOrder={handleProcessOrder}
+            customer={customer}
           />
         );
+
       case "processOrderConfirmation":
         return (
           <ProcessOrderConfirmation

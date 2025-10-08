@@ -783,3 +783,57 @@ export const API_HELPERS = {
     },
   ],
 };
+
+// ==========================================================================
+// STAFF MEMBERS (ADP Payroll System)
+// ==========================================================================
+export const STAFF_MEMBERS = [
+  {
+    id: 1,
+    name: "Sofia",
+    role: "Owner/Manager",
+    hourlyRate: 35,
+    available: true,
+  },
+  {
+    id: 2,
+    name: "Maria Rodriguez",
+    role: "Lead Chef",
+    hourlyRate: 25,
+    available: true,
+  },
+  { id: 3, name: "Oso", role: "Prep Cook", hourlyRate: 18, available: true },
+  { id: 4, name: "Anna", role: "Server", hourlyRate: 30, available: true },
+  { id: 5, name: "Leo", role: "Prep Cook", hourlyRate: 18, available: true },
+  {
+    id: 6,
+    name: "James Chen",
+    role: "Prep Cook",
+    hourlyRate: 18,
+    available: true,
+  },
+  {
+    id: 7,
+    name: "Sarah Johnson",
+    role: "Server",
+    hourlyRate: 15,
+    available: false,
+  },
+  { id: 8, name: "David Lee", role: "Server", hourlyRate: 15, available: true },
+];
+
+// ==========================================================================
+// INVENTORY ITEMS (MarginEdge)
+// ==========================================================================
+export const INVENTORY_ITEMS = [
+  { id: 1, name: "Rice Bowl Trays (serves 50)", cost: 35.0, unit: "tray" },
+  { id: 2, name: "Pork Trays (serves 50)", cost: 40.0, unit: "tray" },
+  { id: 3, name: "Chicken Trays (serves 50)", cost: 38.0, unit: "tray" },
+  { id: 4, name: "Taco Bar Kit (serves 20)", cost: 45.0, unit: "kit" },
+  { id: 5, name: "Chip Bags", cost: 5.0, unit: "bag" },
+  { id: 6, name: "Bottled Water", cost: 0.5, unit: "bottle" },
+  { id: 7, name: "Horchata (gallon)", cost: 8.0, unit: "gallon" },
+  { id: 8, name: "Plantain Chips", cost: 3.0, unit: "bag" },
+  { id: 9, name: "Utensil Packs", cost: 0.15, unit: "pack" },
+  { id: 10, name: "Napkins (50ct)", cost: 2.0, unit: "pack" },
+];
