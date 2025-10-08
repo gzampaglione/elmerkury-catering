@@ -10,6 +10,11 @@ import {
   Divider,
   Button,
   Typography,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
 } from "@mui/material";
 import {
   ExpandMore,
@@ -20,7 +25,24 @@ import {
 } from "@mui/icons-material";
 
 const EditOrderScreen = ({ setView, order: initialOrder, customer }) => {
-  const [order] = useState(initialOrder);
+  const [order, setOrder] = useState(initialOrder);
+  const [isDirty, setIsDirty] = useState(false);
+  const [open, setOpen] = useState(false);
+
+  const handleOpen = () => {
+    setOpen(true);
+  };
+
+  const handleClose = () => {
+    setOpen(false);
+  };
+
+  const handleChange = (e, index) => {
+    const newItems = [...order.items];
+    newItems[index].qty = e.target.value;
+    setOrder({ ...order, items: newItems });
+    setIsDirty(true);
+  };
 
   return (
     <>
@@ -73,7 +95,7 @@ const EditOrderScreen = ({ setView, order: initialOrder, customer }) => {
       <Accordion defaultExpanded>
         <AccordionSummary expandIcon={<ExpandMore />}>Items</AccordionSummary>
         <AccordionDetails>
-          {order.items.map((item) => (
+          {order.items.map((item, index) => (
             <Box
               key={item.id}
               sx={{ display: "flex", alignItems: "center", gap: 1, my: 1 }}
@@ -84,6 +106,7 @@ const EditOrderScreen = ({ setView, order: initialOrder, customer }) => {
                 defaultValue={item.qty}
                 type="number"
                 sx={{ width: 70 }}
+                onChange={(e) => handleChange(e, index)}
               />
               <Typography sx={{ flexGrow: 1 }}>{item.matchedItem}</Typography>
               <IconButton size="small">
@@ -95,17 +118,41 @@ const EditOrderScreen = ({ setView, order: initialOrder, customer }) => {
       </Accordion>
       <Divider sx={{ my: 2 }} />
       <Box sx={{ display: "flex", justifyContent: "space-between" }}>
-        <Button color="error" startIcon={<Block />}>
+        <Button color="error" startIcon={<Block />} onClick={handleOpen}>
           Cancel Order
         </Button>
         <Button
           variant="contained"
           startIcon={<Update />}
           onClick={() => alert("Order Updated!")}
+          disabled={!isDirty}
         >
           Update Order
         </Button>
       </Box>
+
+      <Dialog
+        open={open}
+        onClose={handleClose}
+        aria-labelledby="alert-dialog-title"
+        aria-describedby="alert-dialog-description"
+      >
+        <DialogTitle id="alert-dialog-title">
+          {"Cancel this order?"}
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText id="alert-dialog-description">
+            Are you sure you want to cancel this order? This action cannot be
+            undone.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleClose}>No</Button>
+          <Button onClick={handleClose} autoFocus>
+            Yes, Cancel
+          </Button>
+        </DialogActions>
+      </Dialog>
     </>
   );
 };
