@@ -198,4 +198,25 @@ export const DUMMY_DATA = {
     { date: "2025-10-10", customer: "Wharton", time: "7:00 PM", total: 820 },
     { date: "2025-10-14", customer: "Penn Law", time: "12:30 PM", total: 450 },
   ],
+
+  toastMenu: [
+    // Add Toast menu structure
+    {
+      itemGuid: "toast-item-1",
+      name: "Chicken Bowl (L)",
+      price: 12.0,
+      category: "Bowls",
+      modifiers: ["Extra Cilantro", "No Onions"],
+    },
+    // ... more items
+  ],
+
+  marginEdgeCosts: {
+    // Mock cost data
+    "toast-item-1": {
+      foodCost: 4.5,
+      laborCost: 2.0,
+      margin: 45.8,
+    },
+  },
 };
