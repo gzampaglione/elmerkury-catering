@@ -28,6 +28,11 @@ import {
   Paper,
   Tabs,
   Tab,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Chip,
 } from "@mui/material";
 import {
   Apartment,
@@ -60,10 +65,14 @@ import {
   Today,
   ViewList,
   ViewModule,
+  Add,
+  RemoveCircleOutline,
+  Event,
+  History,
 } from "@mui/icons-material";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 
-// --- THEME to match Google's Material Design aesthetic ---
+// --- THEME ---
 const theme = createTheme({
   palette: {
     primary: { main: "#1976d2" },
@@ -71,7 +80,7 @@ const theme = createTheme({
     warning: { main: "#fbbc05" },
     error: { main: "#ea4335" },
     info: { main: "#4285F4" },
-    grey: { 50: "#f8f9fa", 100: "#f1f3f4" },
+    grey: { 50: "#f8f9fa", 100: "#f1f3f4", 200: "#e9ecef" },
   },
   typography: { fontFamily: "Roboto, sans-serif" },
   components: {
@@ -90,13 +99,15 @@ const theme = createTheme({
   },
 });
 
-// --- DUMMY DATA ---
+// --- DUMMY DATA V2.0 ---
 const DUMMY_DATA = {
   knownCustomer: {
     name: "Penn Law",
+    clientSince: "2021",
+    avgMargin: 42,
     orderCount: 15,
     ytdSpend: 12450,
-    lastOrder: "April 15, 2025",
+    lastOrder: "October 7, 2025",
     contactName: "Ashley Duchi",
     contactEmail: "ashley@law.upenn.edu",
     contactPhone: "(215) 555-1234",
@@ -126,7 +137,8 @@ const DUMMY_DATA = {
         qty: 3,
         unitPrice: 12.0,
         notes: "Extra cilantro, no onions",
-        foodCost: 4.5,
+        estFoodCost: 4.5,
+        estLaborCost: 1.5,
       },
       {
         id: 2,
@@ -136,7 +148,8 @@ const DUMMY_DATA = {
         qty: 2,
         unitPrice: 8.0,
         notes: "Vegan option",
-        foodCost: 2.4,
+        estFoodCost: 2.4,
+        estLaborCost: 0.75,
       },
       {
         id: 3,
@@ -146,57 +159,58 @@ const DUMMY_DATA = {
         qty: 1,
         unitPrice: 10.0,
         notes: "",
-        foodCost: 3.2,
+        estFoodCost: 3.2,
+        estLaborCost: 0.5,
       },
     ],
     deliveryFee: 25.0,
     tip: 10.0,
+    utensils: { included: true, count: 30, costPer: 0.15 },
   },
   proposals: [
     {
       id: 1,
       title: "Traditional Guatemalan Feast",
-      ingredientsOnHand: true,
-      successRate: 87,
-      similarTo: "Penn Law 4/15",
       items: [
-        { id: 1, name: "Pepian Chicken (L)", qty: 2, price: 85, cost: 37.5 },
-        { id: 2, name: "Black Bean Rice (L)", qty: 2, price: 32, cost: 12.0 },
+        {
+          id: 1,
+          name: "Pepian Chicken (L)",
+          qty: 2,
+          price: 85,
+          cost: 37.5,
+          labor: 10,
+        },
+        {
+          id: 2,
+          name: "Black Bean Rice (L)",
+          qty: 2,
+          price: 32,
+          cost: 12.0,
+          labor: 4,
+        },
       ],
-      margin: 68,
-      status: "BEST",
     },
     {
       id: 2,
       title: "Hearty Taco Bar",
-      ingredientsOnHand: true,
-      successRate: 92,
-      similarTo: "SIG 3/12",
-      items: [
-        { id: 1, name: "Carne Asada (per lb)", qty: 5, price: 25, cost: 11.0 },
-        { id: 2, name: "Corn Tortillas (50)", qty: 1, price: 20, cost: 5.0 },
-      ],
-      margin: 62,
-      status: "GOOD",
-    },
-    {
-      id: 3,
-      title: "Vegetarian Celebration",
-      ingredientsOnHand: false,
-      needs: "squash",
-      successRate: 85,
       items: [
         {
           id: 1,
-          name: "Stuffed Chile Rellenos (12)",
-          qty: 2,
-          price: 60,
-          cost: 20.0,
+          name: "Carne Asada (per lb)",
+          qty: 5,
+          price: 25,
+          cost: 11.0,
+          labor: 3,
         },
-        { id: 2, name: "Elote Loco Tray", qty: 1, price: 45, cost: 15.0 },
+        {
+          id: 2,
+          name: "Corn Tortillas (50)",
+          qty: 1,
+          price: 20,
+          cost: 5.0,
+          labor: 2,
+        },
       ],
-      margin: 71,
-      status: "HIGH MARGIN",
     },
   ],
   recentOrders: [
@@ -204,71 +218,73 @@ const DUMMY_DATA = {
       id: "#12345",
       customer: "Penn Law",
       date: "Oct 07",
-      status: "Confirmed",
+      status: "scheduled",
       total: 97.0,
     },
     {
       id: "#12344",
       customer: "SIG",
       date: "Oct 05",
-      status: "Delivered",
+      status: "completed",
       total: 325.0,
     },
     {
       id: "#12343",
       customer: "Wharton",
       date: "Oct 03",
-      status: "Delivered",
+      status: "completed",
       total: 850.0,
     },
     {
       id: "#12342",
       customer: "Comcast",
       date: "Oct 02",
-      status: "Delivered",
+      status: "completed",
       total: 1200.0,
     },
     {
       id: "#12341",
       customer: "Penn Law",
       date: "Sep 28",
-      status: "Paid",
+      status: "completed",
       total: 450.0,
     },
+  ],
+  allOrders: [
     {
-      id: "#12340",
-      customer: "Morgan Lewis",
-      date: "Sep 25",
-      status: "Paid",
-      total: 680.0,
-    },
-    {
-      id: "#12339",
-      customer: "SIG",
-      date: "Sep 22",
-      status: "Paid",
-      total: 250.0,
-    },
-    {
-      id: "#12338",
-      customer: "GoPuff",
-      date: "Sep 19",
-      status: "Paid",
-      total: 950.0,
-    },
-    {
-      id: "#12337",
+      id: "#12345",
       customer: "Penn Law",
-      date: "Sep 15",
-      status: "Paid",
-      total: 720.0,
+      date: "2025-10-07",
+      status: "scheduled",
+      total: 97.0,
     },
     {
-      id: "#12336",
-      customer: "CHOP",
-      date: "Sep 12",
-      status: "Paid",
-      total: 480.0,
+      id: "#12344",
+      customer: "SIG",
+      date: "2025-10-05",
+      status: "completed",
+      total: 325.0,
+    },
+    {
+      id: "#12343",
+      customer: "Wharton",
+      date: "2025-10-03",
+      status: "completed",
+      total: 850.0,
+    },
+    {
+      id: "#12342",
+      customer: "Comcast",
+      date: "2025-10-02",
+      status: "completed",
+      total: 1200.0,
+    },
+    {
+      id: "#12341",
+      customer: "Penn Law",
+      date: "2025-09-28",
+      status: "completed",
+      total: 450.0,
     },
   ],
   calendarEvents: [
@@ -347,18 +363,21 @@ const Homepage = ({ setView, customer, recentOrders }) => (
       }}
     >
       <CardContent>
-        <Typography
-          sx={{ fontWeight: "bold", display: "flex", alignItems: "center" }}
-        >
-          {customer.name === "New Customer" ? (
+        {customer.name === "New Customer" ? (
+          <Typography
+            sx={{ fontWeight: "bold", display: "flex", alignItems: "center" }}
+          >
             <Warning color="warning" sx={{ mr: 1 }} />
-          ) : (
-            <BusinessCenter color="primary" sx={{ mr: 1 }} />
-          )}
-          {customer.name}
-        </Typography>
-        {customer.name !== "New Customer" && (
+            {customer.name}
+          </Typography>
+        ) : (
           <>
+            <Typography
+              sx={{ fontWeight: "bold", display: "flex", alignItems: "center" }}
+            >
+              <BusinessCenter color="primary" sx={{ mr: 1 }} />
+              {customer.name}
+            </Typography>
             <Typography variant="body2">
               📊 {customer.orderCount} orders | $
               {customer.ytdSpend.toLocaleString()} YTD
@@ -371,9 +390,6 @@ const Homepage = ({ setView, customer, recentOrders }) => (
       </CardContent>
     </Card>
     <Divider sx={{ my: 2, borderStyle: "dashed" }} />
-    <Typography variant="body1" sx={{ mb: 1.5, fontWeight: 500 }}>
-      What would you like to do?
-    </Typography>
     <Button
       fullWidth
       variant="contained"
@@ -400,12 +416,28 @@ const Homepage = ({ setView, customer, recentOrders }) => (
     >
       Send Menu & Pricing Info
     </Button>
-    <SectionHeader>Recent Orders</SectionHeader>
+    <Button
+      fullWidth
+      onClick={() => setView("searchOrders")}
+      sx={{ justifyContent: "flex-start", mt: 2.5, mb: 1 }}
+    >
+      <Typography variant="overline" color="text.secondary">
+        Recent Orders
+      </Typography>
+    </Button>
     <List dense>
-      {recentOrders.slice(0, 10).map((order) => (
+      {recentOrders.slice(0, 5).map((order) => (
         <ListItem key={order.id} disablePadding>
+          <ListItemIcon sx={{ minWidth: 30 }}>
+            {order.status === "scheduled" ? (
+              <Event color="primary" />
+            ) : (
+              <History color="action" />
+            )}
+          </ListItemIcon>
           <ListItemText
-            primary={`• ${order.customer} - ${order.date} (${order.id})`}
+            primary={`${order.customer} - ${order.date}`}
+            secondary={`$${order.total.toFixed(2)}`}
           />
         </ListItem>
       ))}
@@ -421,7 +453,7 @@ const Homepage = ({ setView, customer, recentOrders }) => (
       <Button
         size="small"
         startIcon={<Search />}
-        onClick={() => setView("editOrderSelect")}
+        onClick={() => setView("searchOrders")}
       >
         Search Orders
       </Button>
@@ -460,26 +492,85 @@ const ProcessOrderStep1 = ({ setView, customer, order }) => {
         margin="dense"
         size="small"
       />
-      <TextField
-        fullWidth
-        label="Company/Client"
-        defaultValue={customer.name}
-        margin="dense"
-        size="small"
-        InputProps={{ endAdornment: <Apartment /> }}
-      />
+      <Select fullWidth defaultValue={customer.name} size="small">
+        <MenuItem value="Penn Law">Penn Law</MenuItem>
+        <MenuItem value="Wharton">Wharton</MenuItem>
+        <MenuItem value="SIG">SIG</MenuItem>
+      </Select>
       {customer.name !== "New Customer" && (
-        <Card variant="outlined" sx={{ p: 1, mt: 1, bgcolor: "grey.50" }}>
-          <Typography variant="caption" sx={{ fontWeight: "bold" }}>
-            Order History
-          </Typography>
-          <Typography variant="caption" display="block">
-            {customer.orderCount} orders | Avg. $
-            {Math.round(customer.ytdSpend / customer.orderCount)}
-          </Typography>
+        <Card variant="outlined" sx={{ p: 1.5, mt: 1, bgcolor: "grey.50" }}>
+          <Grid container spacing={1}>
+            <Grid item xs={6}>
+              <Typography variant="caption" display="block">
+                Client Since:
+              </Typography>
+              <Typography variant="body2" fontWeight="500">
+                {customer.clientSince}
+              </Typography>
+            </Grid>
+            <Grid item xs={6}>
+              <Typography variant="caption" display="block">
+                Total Volume:
+              </Typography>
+              <Typography variant="body2" fontWeight="500">
+                ${customer.ytdSpend.toLocaleString()}
+              </Typography>
+            </Grid>
+            <Grid item xs={6}>
+              <Typography variant="caption" display="block">
+                Avg. Order:
+              </Typography>
+              <Typography variant="body2" fontWeight="500">
+                ${Math.round(customer.ytdSpend / customer.orderCount)}
+              </Typography>
+            </Grid>
+            <Grid item xs={6}>
+              <Typography variant="caption" display="block">
+                Avg. Margin:
+              </Typography>
+              <Typography
+                variant="body2"
+                fontWeight="500"
+                color={
+                  customer.avgMargin > 40 ? "success.main" : "warning.main"
+                }
+              >
+                {customer.avgMargin}% (
+                {customer.avgMargin > 40 ? "Strong" : "Weak"})
+              </Typography>
+            </Grid>
+          </Grid>
         </Card>
       )}
       <SectionHeader>Delivery Details</SectionHeader>
+      <TextField
+        fullWidth
+        label="Address Line 1"
+        defaultValue={customer.address.line1}
+        margin="dense"
+        size="small"
+      />
+      <TextField
+        fullWidth
+        label="Address Line 2"
+        defaultValue={customer.address.line2}
+        margin="dense"
+        size="small"
+      />
+      <Box sx={{ display: "flex", gap: 1 }}>
+        <TextField
+          label="State"
+          defaultValue={customer.address.state}
+          margin="dense"
+          size="small"
+        />
+        <TextField
+          label="ZIP Code"
+          defaultValue={customer.address.zip}
+          margin="dense"
+          size="small"
+        />
+      </Box>
       <Box sx={{ display: "flex", gap: 1, mt: 1 }}>
         <TextField
           fullWidth
@@ -529,21 +620,21 @@ const ProcessOrderStep1 = ({ setView, customer, order }) => {
 
 const ProcessOrderStep2 = ({ setView, order: initialOrder }) => {
   const [order, setOrder] = useState(initialOrder);
-  const [subtotal, setSubtotal] = useState(0);
+  const [editingFee, setEditingFee] = useState(null);
 
-  useEffect(() => {
-    const newSubtotal = order.items.reduce(
-      (acc, item) => acc + item.qty * item.unitPrice,
-      0
-    );
-    setSubtotal(newSubtotal);
-  }, [order]);
-
-  const totalFoodCost = order.items.reduce(
-    (acc, item) => acc + item.qty * item.foodCost,
+  const subtotal = order.items.reduce(
+    (acc, item) => acc + item.qty * item.unitPrice,
     0
   );
-  const grossProfit = subtotal - totalFoodCost;
+  const totalFoodCost = order.items.reduce(
+    (acc, item) => acc + item.qty * item.estFoodCost,
+    0
+  );
+  const totalLaborCost = order.items.reduce(
+    (acc, item) => acc + item.qty * item.estLaborCost,
+    0
+  );
+  const grossProfit = subtotal - totalFoodCost - totalLaborCost;
   const netProfit = grossProfit - parseFloat(order.deliveryFee || 0);
 
   return (
@@ -553,57 +644,171 @@ const ProcessOrderStep2 = ({ setView, order: initialOrder }) => {
       <Alert severity="info" sx={{ my: 2 }}>
         AI detected {order.items.length} items from email.
       </Alert>
-      <SectionHeader>Items Ordered</SectionHeader>
-      {order.items.map((item, index) => (
+      <SectionHeader>
+        Items Ordered{" "}
+        <Tooltip title="Pulled from Toast">
+          <Info fontSize="small" sx={{ ml: 1 }} color="disabled" />
+        </Tooltip>
+      </SectionHeader>
+      {order.items.map((item) => (
         <Card key={item.id} variant="outlined" sx={{ mb: 1.5 }}>
           <CardContent>
             <Typography variant="caption" color="text.secondary">
               Email: "{item.emailDesc}"
             </Typography>
-            <Typography variant="body1" sx={{ fontWeight: 500, mt: 1 }}>
-              {item.qty}× {item.matchedItem}
-            </Typography>
-            <Typography variant="body2">
-              = ${(item.qty * item.unitPrice).toFixed(2)}
-            </Typography>
-            <Divider sx={{ my: 1 }} />
-            <Typography variant="caption" sx={{ fontWeight: "bold" }}>
-              Profitability:
-            </Typography>
-            <Typography variant="caption" display="block">
-              Food Cost: ${(item.qty * item.foodCost).toFixed(2)} (
-              {((item.foodCost / item.unitPrice) * 100).toFixed(1)}%) ✅
-            </Typography>
-            <Typography variant="caption" display="block">
-              Profit: $
-              {(item.qty * item.unitPrice - item.qty * item.foodCost).toFixed(
-                2
-              )}
-            </Typography>
+            <Select
+              fullWidth
+              defaultValue={item.matchedItem}
+              size="small"
+              sx={{ my: 1 }}
+            >
+              <MenuItem value={item.matchedItem}>{item.matchedItem}</MenuItem>
+            </Select>
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
+            >
+              <TextField
+                label="Qty"
+                defaultValue={item.qty}
+                size="small"
+                type="number"
+                sx={{ width: "70px" }}
+              />
+              <Typography>
+                x ${item.unitPrice.toFixed(2)} ={" "}
+                <b>${(item.qty * item.unitPrice).toFixed(2)}</b>
+              </Typography>
+              <IconButton size="small">
+                <RemoveCircleOutline color="error" />
+              </IconButton>
+            </Box>
+            <Accordion sx={{ mt: 1, boxShadow: "none", bgcolor: "grey.50" }}>
+              <AccordionSummary expandIcon={<ExpandMore />}>
+                <Typography variant="caption">Profitability</Typography>
+              </AccordionSummary>
+              <AccordionDetails>
+                <Grid container spacing={1}>
+                  <Grid item xs={6}>
+                    <Typography variant="caption">Est Food Cost:</Typography>
+                  </Grid>
+                  <Grid item xs={6} textAlign="right">
+                    <Typography variant="caption">
+                      ${(item.qty * item.estFoodCost).toFixed(2)}
+                    </Typography>
+                  </Grid>
+                  <Grid item xs={6}>
+                    <Typography variant="caption">Est Labor Cost:</Typography>
+                  </Grid>
+                  <Grid item xs={6} textAlign="right">
+                    <Typography variant="caption">
+                      ${(item.qty * item.estLaborCost).toFixed(2)}
+                    </Typography>
+                  </Grid>
+                  <Grid item xs={6}>
+                    <Typography variant="caption" fontWeight="bold">
+                      Gross Margin:
+                    </Typography>
+                  </Grid>
+                  <Grid item xs={6} textAlign="right">
+                    <Typography
+                      variant="caption"
+                      fontWeight="bold"
+                      color="success.main"
+                    >
+                      $
+                      {(
+                        item.qty * item.unitPrice -
+                        item.qty * item.estFoodCost -
+                        item.qty * item.estLaborCost
+                      ).toFixed(2)}{" "}
+                      (
+                      {(
+                        ((item.unitPrice -
+                          item.estFoodCost -
+                          item.estLaborCost) /
+                          item.unitPrice) *
+                        100
+                      ).toFixed(0)}
+                      %)
+                    </Typography>
+                  </Grid>
+                </Grid>
+              </AccordionDetails>
+            </Accordion>
           </CardContent>
         </Card>
       ))}
       <SectionHeader>Additional Charges</SectionHeader>
-      <TextField
-        label="Tip"
-        value={order.tip}
-        onChange={(e) => setOrder({ ...order, tip: e.target.value })}
-        size="small"
-        margin="dense"
-        type="number"
-      />
-      <TextField
-        label="Delivery Fee"
-        value={order.deliveryFee}
-        onChange={(e) => setOrder({ ...order, deliveryFee: e.target.value })}
-        size="small"
-        margin="dense"
-        type="number"
-      />
+      <Paper variant="outlined" sx={{ p: 2 }}>
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
+          <Typography>Tip:</Typography>
+          {editingFee === "tip" ? (
+            <TextField
+              value={order.tip}
+              onChange={(e) => setOrder({ ...order, tip: e.target.value })}
+              onBlur={() => setEditingFee(null)}
+              size="small"
+              type="number"
+              sx={{ width: 80 }}
+              autoFocus
+            />
+          ) : (
+            <Typography>
+              ${parseFloat(order.tip || 0).toFixed(2)}{" "}
+              <IconButton size="small" onClick={() => setEditingFee("tip")}>
+                <Edit fontSize="inherit" />
+              </IconButton>
+            </Typography>
+          )}
+        </Box>
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            mt: 1,
+          }}
+        >
+          <Typography>Delivery Fee:</Typography>
+          {editingFee === "delivery" ? (
+            <TextField
+              value={order.deliveryFee}
+              onChange={(e) =>
+                setOrder({ ...order, deliveryFee: e.target.value })
+              }
+              onBlur={() => setEditingFee(null)}
+              size="small"
+              type="number"
+              sx={{ width: 80 }}
+              autoFocus
+            />
+          ) : (
+            <Typography>
+              ${parseFloat(order.deliveryFee || 0).toFixed(2)}{" "}
+              <IconButton
+                size="small"
+                onClick={() => setEditingFee("delivery")}
+              >
+                <Edit fontSize="inherit" />
+              </IconButton>
+            </Typography>
+          )}
+        </Box>
+      </Paper>
       <Card variant="outlined" sx={{ my: 2, bgcolor: "grey.50" }}>
         <CardContent>
           <SectionHeader>Order Profitability</SectionHeader>
-          <Grid container spacing={1}>
+          <Grid container spacing={0.5}>
             <Grid item xs={6}>
               <Typography>Revenue:</Typography>
             </Grid>
@@ -611,69 +816,56 @@ const ProcessOrderStep2 = ({ setView, order: initialOrder }) => {
               <Typography>${subtotal.toFixed(2)}</Typography>
             </Grid>
             <Grid item xs={6}>
-              <Typography>Food Cost:</Typography>
+              <Typography>Est Food Cost:</Typography>
             </Grid>
             <Grid item xs={6} textAlign="right">
-              <Typography>
-                ${totalFoodCost.toFixed(2)} (
-                {((totalFoodCost / subtotal) * 100 || 0).toFixed(1)}%) ✅
-              </Typography>
+              <Typography>- ${totalFoodCost.toFixed(2)}</Typography>
             </Grid>
             <Grid item xs={6}>
-              <Typography sx={{ fontWeight: "bold" }}>Gross Profit:</Typography>
+              <Typography>Est Labor Cost:</Typography>
             </Grid>
             <Grid item xs={6} textAlign="right">
-              <Typography sx={{ fontWeight: "bold" }}>
+              <Typography>- ${totalLaborCost.toFixed(2)}</Typography>
+            </Grid>
+            <Grid item xs={12}>
+              <Divider sx={{ my: 0.5 }} />
+            </Grid>
+            <Grid item xs={6}>
+              <Typography fontWeight="bold">Gross Profit:</Typography>
+            </Grid>
+            <Grid item xs={6} textAlign="right">
+              <Typography fontWeight="bold">
                 ${grossProfit.toFixed(2)}
               </Typography>
             </Grid>
-            <Grid item xs={12}>
-              <Divider sx={{ my: 1 }} />
-            </Grid>
             <Grid item xs={6}>
-              <Typography>Delivery:</Typography>
+              <Typography>Delivery Fee:</Typography>
             </Grid>
             <Grid item xs={6} textAlign="right">
               <Typography>
                 - ${parseFloat(order.deliveryFee || 0).toFixed(2)}
               </Typography>
             </Grid>
+            <Grid item xs={12}>
+              <Divider sx={{ my: 0.5 }} />
+            </Grid>
             <Grid item xs={6}>
               <Typography
-                sx={{
-                  fontWeight: "bold",
-                  color: netProfit > 0 ? "success.main" : "error.main",
-                }}
+                fontWeight="bold"
+                color={netProfit > 0 ? "success.main" : "error.main"}
               >
                 Net Profit:
               </Typography>
             </Grid>
             <Grid item xs={6} textAlign="right">
               <Typography
-                sx={{
-                  fontWeight: "bold",
-                  color: netProfit > 0 ? "success.main" : "error.main",
-                }}
+                fontWeight="bold"
+                color={netProfit > 0 ? "success.main" : "error.main"}
               >
                 ${netProfit.toFixed(2)}
               </Typography>
             </Grid>
           </Grid>
-          <Alert
-            severity="info"
-            icon={<Info fontSize="inherit" />}
-            sx={{ mt: 2 }}
-          >
-            💡 Suggestion: Add plantains (+$10 revenue, +$2 cost). New profit: $
-            {(netProfit + 8).toFixed(2)}
-          </Alert>
-          <Alert
-            severity="error"
-            icon={<Warning fontSize="inherit" />}
-            sx={{ mt: 1 }}
-          >
-            ⚠️ Inventory Warning: Low chicken stock (2 lbs left)
-          </Alert>
         </CardContent>
       </Card>
       <Button
@@ -693,77 +885,75 @@ const ProcessOrderStep3 = ({ setView, order, customer }) => {
     (acc, item) => acc + item.qty * item.unitPrice,
     0
   );
-  const total = subtotal + order.deliveryFee + order.tip;
+  const utensilsTotal = order.utensils.included
+    ? order.utensils.count * order.utensils.costPer
+    : 0;
+  const total =
+    subtotal +
+    parseFloat(order.deliveryFee) +
+    parseFloat(order.tip) +
+    utensilsTotal;
   return (
     <>
       <BackButton onClick={() => setView("processOrderStep2")}>Back</BackButton>
       <Typography variant="h6">Step 3 of 3: Final Review</Typography>
-      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-        Order #{order.orderNum}
-      </Typography>
-      <SectionHeader>Order Summary</SectionHeader>
-      <List>
-        <ListItem>
-          <ListItemIcon>
-            <Person />
-          </ListItemIcon>
-          <ListItemText
-            primary={customer.contactName}
-            secondary={customer.name}
-          />
-        </ListItem>
-        <ListItem>
-          <ListItemIcon>
-            <Warning color="error" />
-          </ListItemIcon>
-          <ListItemText primary="Tax Exempt | Requires PO" />
-        </ListItem>
-        <ListItem>
-          <ListItemIcon>
-            <Apartment />
-          </ListItemIcon>
-          <ListItemText
-            primary={customer.address.line1}
-            secondary={`${customer.address.city}, ${customer.address.state} ${customer.address.zip}`}
-          />
-        </ListItem>
-        <ListItem>
-          <ListItemIcon>
-            <CalendarMonth />
-          </ListItemIcon>
-          <ListItemText primary="May 20, 2025 at 12:30 PM" />
-        </ListItem>
-      </List>
-      <Divider />
-      <List dense>
-        {order.items.map((i) => (
-          <ListItem key={i.id}>
-            <ListItemText
-              primary={`• ${i.qty}× ${i.matchedItem}`}
-              secondary={`$${(i.qty * i.unitPrice).toFixed(2)}`}
-            />
-          </ListItem>
-        ))}
-      </List>
-      <Typography variant="h5" align="right" sx={{ my: 2 }}>
-        💰 Total: ${total.toFixed(2)}
-      </Typography>
+      <Paper variant="outlined" sx={{ p: 2, my: 2 }}>
+        <Grid container spacing={1}>
+          <Grid item xs={12}>
+            <Typography variant="h6">Order Summary</Typography>
+          </Grid>
+          {order.items.map((i) => (
+            <React.Fragment key={i.id}>
+              <Grid item xs={8}>
+                {i.qty}× {i.matchedItem}
+              </Grid>
+              <Grid item xs={4} textAlign="right">
+                ${(i.qty * i.unitPrice).toFixed(2)}
+              </Grid>
+            </React.Fragment>
+          ))}
+          <Grid item xs={12}>
+            <Divider sx={{ my: 1 }} />
+          </Grid>
+          <Grid item xs={8}>
+            Items Subtotal
+          </Grid>
+          <Grid item xs={4} textAlign="right">
+            ${subtotal.toFixed(2)}
+          </Grid>
+          <Grid item xs={8}>
+            Delivery Fee
+          </Grid>
+          <Grid item xs={4} textAlign="right">
+            ${parseFloat(order.deliveryFee).toFixed(2)}
+          </Grid>
+          <Grid item xs={8}>
+            Tip
+          </Grid>
+          <Grid item xs={4} textAlign="right">
+            ${parseFloat(order.tip).toFixed(2)}
+          </Grid>
+          <Grid item xs={8}>
+            Utensils ({order.utensils.count} sets)
+          </Grid>
+          <Grid item xs={4} textAlign="right">
+            ${utensilsTotal.toFixed(2)}
+          </Grid>
+          <Grid item xs={12}>
+            <Divider sx={{ my: 1 }} />
+          </Grid>
+          <Grid item xs={8}>
+            <Typography fontWeight="bold">Grand Total</Typography>
+          </Grid>
+          <Grid item xs={4} textAlign="right">
+            <Typography fontWeight="bold">${total.toFixed(2)}</Typography>
+          </Grid>
+        </Grid>
+      </Paper>
       {customer.flags.requiresPO && (
         <>
           <SectionHeader>Penn Special Handling</SectionHeader>
           <Alert severity="warning">This customer requires a PO</Alert>
-          <RadioGroup row defaultValue="final">
-            <FormControlLabel
-              value="preliminary"
-              control={<Radio />}
-              label="Preliminary (awaiting PO)"
-            />
-            <FormControlLabel
-              value="final"
-              control={<Radio />}
-              label="Final (PO provided)"
-            />
-          </RadioGroup>
           <TextField
             fullWidth
             label="PO Number"
@@ -773,12 +963,12 @@ const ProcessOrderStep3 = ({ setView, order, customer }) => {
           />
         </>
       )}
-      <Divider sx={{ my: 2 }} />
       <Button
         fullWidth
         variant="contained"
         color="success"
         size="large"
+        sx={{ mt: 2 }}
         startIcon={<CheckCircle />}
         onClick={() => setView("processOrderConfirmation")}
       >
@@ -787,62 +977,6 @@ const ProcessOrderStep3 = ({ setView, order, customer }) => {
     </>
   );
 };
-
-const ProcessOrderConfirmation = ({ setView, order, openEmail }) => (
-  <>
-    <Box sx={{ textAlign: "center", my: 2 }}>
-      <CheckCircle color="success" sx={{ fontSize: 48 }} />
-      <Typography variant="h6">Order Processed Successfully!</Typography>
-      <Typography color="text.secondary">
-        Order #{order.orderNum} | Penn Law | $97.00
-      </Typography>
-    </Box>
-    <SectionHeader>Created in Systems</SectionHeader>
-    <List dense>
-      <ListItem>
-        <ListItemText
-          primary="📊 Toast Kitchen Display"
-          secondary="Order ID: T-5678"
-        />
-      </ListItem>
-      <ListItem>
-        <ListItemText
-          primary="💳 QuickBooks Invoice"
-          secondary="Invoice #: QBO-1234"
-        />
-      </ListItem>
-      <ListItem>
-        <ListItemText
-          primary="📈 HubSpot CRM Deal"
-          secondary="Stage: Confirmed & In Kitchen"
-        />
-      </ListItem>
-      <ListItem>
-        <ListItemText
-          primary="📄 Kitchen Sheet (Backup)"
-          secondary="Sheet: Kitchen-12345678"
-        />
-      </ListItem>
-    </List>
-    <SectionHeader>Email Draft</SectionHeader>
-    <Typography variant="body2">
-      Draft created with invoice PDF attached and ready to send.
-    </Typography>
-    <Button
-      fullWidth
-      variant="contained"
-      startIcon={<Email />}
-      sx={{ my: 2 }}
-      onClick={openEmail}
-    >
-      Open Email Draft
-    </Button>
-    <Divider />
-    <Button fullWidth sx={{ mt: 2 }} onClick={() => setView("homepage")}>
-      🏠 Back to Home
-    </Button>
-  </>
-);
 
 const GenerateProposalStep1 = ({ setView, customer }) => (
   <>
@@ -884,16 +1018,49 @@ const GenerateProposalStep2 = ({ setView, initialProposals, openEmail }) => {
   ); // Deep copy
 
   const handleItemChange = (propId, itemId, field, value) => {
-    const updatedProposals = proposals.map((p) => {
-      if (p.id === propId) {
-        const updatedItems = p.items.map((item) =>
-          item.id === itemId ? { ...item, [field]: value } : item
-        );
-        return { ...p, items: updatedItems };
-      }
-      return p;
-    });
-    setProposals(updatedProposals);
+    setProposals(
+      proposals.map((p) =>
+        p.id === propId
+          ? {
+              ...p,
+              items: p.items.map((item) =>
+                item.id === itemId ? { ...item, [field]: value } : item
+              ),
+            }
+          : p
+      )
+    );
+  };
+  const handleRemoveItem = (propId, itemId) => {
+    setProposals(
+      proposals.map((p) =>
+        p.id === propId
+          ? { ...p, items: p.items.filter((item) => item.id !== itemId) }
+          : p
+      )
+    );
+  };
+  const handleAddItem = (propId) => {
+    setProposals(
+      proposals.map((p) =>
+        p.id === propId
+          ? {
+              ...p,
+              items: [
+                ...p.items,
+                {
+                  id: Date.now(),
+                  name: "New Item",
+                  qty: 1,
+                  price: 10,
+                  cost: 4,
+                  labor: 1,
+                },
+              ],
+            }
+          : p
+      )
+    );
   };
 
   return (
@@ -907,15 +1074,21 @@ const GenerateProposalStep2 = ({ setView, initialProposals, openEmail }) => {
           (acc, item) => acc + item.qty * item.price,
           0
         );
+        const totalCost = p.items.reduce(
+          (acc, item) => acc + item.qty * item.cost,
+          0
+        );
+        const totalLabor = p.items.reduce(
+          (acc, item) => acc + item.qty * item.labor,
+          0
+        );
+        const margin = ((total - totalCost - totalLabor) / total) * 100 || 0;
         return (
-          <Accordion key={p.id} defaultExpanded={i === 0}>
+          <Accordion key={p.id}>
             <AccordionSummary expandIcon={<ExpandMore />}>
               <Typography sx={{ fontWeight: "bold" }}>{p.title}</Typography>
             </AccordionSummary>
             <AccordionDetails sx={{ bgcolor: "#fafafa" }}>
-              <Typography variant="body2" color="primary.main">
-                ⭐ Margin: {p.margin}% ({p.status})
-              </Typography>
               {p.items.map((item) => (
                 <Box
                   key={item.id}
@@ -930,7 +1103,14 @@ const GenerateProposalStep2 = ({ setView, initialProposals, openEmail }) => {
                     type="number"
                     sx={{ width: 70 }}
                   />
-                  <Typography sx={{ flexGrow: 1 }}>{item.name}</Typography>
+                  <TextField
+                    fullWidth
+                    size="small"
+                    value={item.name}
+                    onChange={(e) =>
+                      handleItemChange(p.id, item.id, "name", e.target.value)
+                    }
+                  />
                   <TextField
                     size="small"
                     value={item.price}
@@ -941,59 +1121,51 @@ const GenerateProposalStep2 = ({ setView, initialProposals, openEmail }) => {
                     sx={{ width: 80 }}
                     InputProps={{ startAdornment: "$" }}
                   />
-                  <IconButton size="small">
-                    <Edit fontSize="inherit" />
+                  <IconButton
+                    size="small"
+                    onClick={() => handleRemoveItem(p.id, item.id)}
+                  >
+                    <Close color="error" />
                   </IconButton>
                 </Box>
               ))}
-              <Typography
-                sx={{ mt: 1, fontWeight: "bold", textAlign: "right" }}
+              <Button
+                startIcon={<Add />}
+                size="small"
+                onClick={() => handleAddItem(p.id)}
               >
-                Total: ${total.toFixed(2)}
-              </Typography>
+                Add Item
+              </Button>
+              <Divider sx={{ my: 1 }} />
+              <Box textAlign="right">
+                <Typography fontWeight="bold">
+                  Total: ${total.toFixed(2)}
+                </Typography>
+                <Typography
+                  variant="caption"
+                  color={margin > 40 ? "success.main" : "warning.main"}
+                >
+                  Est. Margin: {margin.toFixed(1)}%
+                </Typography>
+              </Box>
+              <Button
+                fullWidth
+                variant="contained"
+                size="small"
+                sx={{ mt: 2 }}
+                onClick={openEmail}
+              >
+                Select Proposal
+              </Button>
             </AccordionDetails>
           </Accordion>
         );
       })}
-      <Button fullWidth variant="contained" sx={{ mt: 2 }} onClick={openEmail}>
-        Continue with Selected →
-      </Button>
     </>
   );
 };
 
-const EditOrderSelect = ({ setView, recentOrders }) => (
-  <>
-    <BackButton onClick={() => setView("homepage")}>Back to Home</BackButton>
-    <Typography variant="h6">Edit Existing Order</Typography>
-    <TextField
-      fullWidth
-      label="Search"
-      size="small"
-      margin="normal"
-      InputProps={{ endAdornment: <Search /> }}
-    />
-    <SectionHeader>Recent Orders</SectionHeader>
-    {recentOrders.map((order) => (
-      <Card key={order.id} variant="outlined" sx={{ mb: 1.5 }}>
-        <CardContent>
-          <Typography sx={{ fontWeight: "bold" }}>
-            {order.id} - {order.customer}
-          </Typography>
-          <Typography variant="body2">{order.date}, 2025</Typography>
-          <Typography variant="body2">
-            Status: {order.status} | Total: ${order.total.toFixed(2)}
-          </Typography>
-          <Button sx={{ mt: 1 }} onClick={() => setView("editOrderScreen")}>
-            Select
-          </Button>
-        </CardContent>
-      </Card>
-    ))}
-  </>
-);
-
-const EditOrderScreen = ({ setView, order: initialOrder }) => {
+const EditOrderScreen = ({ setView, order: initialOrder, customer }) => {
   const [order, setOrder] = useState(initialOrder);
   return (
     <>
@@ -1010,7 +1182,14 @@ const EditOrderScreen = ({ setView, order: initialOrder }) => {
           <TextField
             fullWidth
             label="Customer Name"
-            defaultValue={DUMMY_DATA.knownCustomer.contactName}
+            defaultValue={customer.contactName}
+            margin="dense"
+            size="small"
+          />
+          <TextField
+            fullWidth
+            label="Address"
+            defaultValue={customer.address.line1}
             margin="dense"
             size="small"
           />
@@ -1047,24 +1226,6 @@ const EditOrderScreen = ({ setView, order: initialOrder }) => {
           ))}
         </AccordionDetails>
       </Accordion>
-      <SectionHeader>What will happen</SectionHeader>
-      <List dense>
-        <ListItem>
-          <Check fontSize="small" /> Update Toast order (new ticket)
-        </ListItem>
-        <ListItem>
-          <Check fontSize="small" /> Void old QBO invoice
-        </ListItem>
-        <ListItem>
-          <Check fontSize="small" /> Create new QBO invoice
-        </ListItem>
-        <ListItem>
-          <Check fontSize="small" /> Update HubSpot deal
-        </ListItem>
-        <ListItem>
-          <Check fontSize="small" /> Send revised invoice email
-        </ListItem>
-      </List>
       <Divider sx={{ my: 2 }} />
       <Box sx={{ display: "flex", justifyContent: "space-between" }}>
         <Button color="error" startIcon={<Block />}>
@@ -1082,8 +1243,72 @@ const EditOrderScreen = ({ setView, order: initialOrder }) => {
   );
 };
 
+const SearchOrders = ({ setView, orders }) => {
+  return (
+    <>
+      <BackButton onClick={() => setView("homepage")}>Back</BackButton>
+      <Typography variant="h6">Search Orders</Typography>
+      <Box sx={{ display: "flex", gap: 1, my: 2 }}>
+        <TextField
+          label="Start Date"
+          type="date"
+          size="small"
+          InputLabelProps={{ shrink: true }}
+        />
+        <TextField
+          label="End Date"
+          type="date"
+          size="small"
+          InputLabelProps={{ shrink: true }}
+        />
+      </Box>
+      <Select
+        multiple
+        defaultValue={["Penn Law"]}
+        fullWidth
+        size="small"
+        renderValue={(selected) => (
+          <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
+            {selected.map((value) => (
+              <Chip key={value} label={value} />
+            ))}
+          </Box>
+        )}
+      >
+        <MenuItem value="Penn Law">Penn Law</MenuItem>
+        <MenuItem value="SIG">SIG</MenuItem>
+        <MenuItem value="Wharton">Wharton</MenuItem>
+      </Select>
+      <List>
+        {orders.map((order) => (
+          <Card key={order.id} variant="outlined" sx={{ mb: 1.5 }}>
+            <CardContent>
+              <Typography fontWeight="bold">
+                {order.id} - {order.customer}
+              </Typography>
+              <Typography variant="body2">{order.date}</Typography>
+              <Typography variant="body2">
+                Status: {order.status} | Total: ${order.total.toFixed(2)}
+              </Typography>
+              <Button sx={{ mt: 1 }} onClick={() => setView("editOrderScreen")}>
+                Select
+              </Button>
+            </CardContent>
+          </Card>
+        ))}
+      </List>
+    </>
+  );
+};
+
 const CalendarView = ({ setView, events }) => {
-  const [viewMode, setViewMode] = useState("list");
+  const [viewMode, setViewMode] = useState("grid");
+  const today = new Date("2025-10-08");
+  const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+  const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+  const days = Array.from({ length: endOfMonth.getDate() }, (_, i) => i + 1);
+  const firstDayIndex = startOfMonth.getDay();
+
   return (
     <>
       <BackButton onClick={() => setView("homepage")}>Back</BackButton>
@@ -1094,7 +1319,7 @@ const CalendarView = ({ setView, events }) => {
           alignItems: "center",
         }}
       >
-        <Typography variant="h6">Calendar</Typography>
+        <Typography variant="h6">October 2025</Typography>
         <Tabs value={viewMode} onChange={(e, val) => setViewMode(val)}>
           <Tab icon={<ViewList />} value="list" />
           <Tab icon={<ViewModule />} value="grid" />
@@ -1114,86 +1339,80 @@ const CalendarView = ({ setView, events }) => {
           ))}
         </List>
       ) : (
-        <Typography sx={{ mt: 2 }}>
-          (A calendar grid component would be rendered here)
-        </Typography>
+        <Grid container columns={7} sx={{ mt: 2 }}>
+          {["S", "M", "T", "W", "T", "F", "S"].map((day) => (
+            <Grid item xs={1} key={day} textAlign="center">
+              <Typography variant="caption" fontWeight="bold">
+                {day}
+              </Typography>
+            </Grid>
+          ))}
+          {Array.from({ length: firstDayIndex }).map((_, i) => (
+            <Grid item xs={1} key={`empty-${i}`} />
+          ))}
+          {days.map((day) => {
+            const event = events.find(
+              (e) => new Date(e.date).getDate() + 1 === day
+            );
+            return (
+              <Grid item xs={1} key={day}>
+                <Paper
+                  variant="outlined"
+                  sx={{
+                    height: 60,
+                    p: 0.5,
+                    bgcolor: event ? "primary.main" : "transparent",
+                    color: event ? "white" : "inherit",
+                  }}
+                >
+                  <Typography fontWeight="bold">{day}</Typography>
+                  {event && (
+                    <Typography variant="caption" display="block" noWrap>
+                      {event.customer}
+                    </Typography>
+                  )}
+                </Paper>
+              </Grid>
+            );
+          })}
+        </Grid>
       )}
     </>
   );
 };
 
-const SettingsPage = ({ setView }) => (
-  <>
-    <BackButton onClick={() => setView("homepage")}>Back</BackButton>
-    <Typography variant="h6">Settings</Typography>
-    <SectionHeader>Integrations</SectionHeader>
-    <Typography>
-      Toast: <CheckCircle color="success" sx={{ verticalAlign: "middle" }} />{" "}
-      Connected
-    </Typography>
-    <Typography>
-      QuickBooks:{" "}
-      <CheckCircle color="success" sx={{ verticalAlign: "middle" }} /> Connected
-    </Typography>
-    <Typography>
-      HubSpot: <CheckCircle color="success" sx={{ verticalAlign: "middle" }} />{" "}
-      Connected
-    </Typography>
-    <Button size="small" startIcon={<Replay />}>
-      Sync Menu Now
-    </Button>
-    <SectionHeader>Menu Generation</SectionHeader>
-    <TextField size="small" label="Number of proposals" defaultValue="5" />
-    <SectionHeader>Notifications</SectionHeader>
-    <FormControlLabel
-      control={<Switch defaultChecked />}
-      label="New website orders"
-    />
-    <FormControlLabel
-      control={<Switch defaultChecked />}
-      label="Customer replies"
-    />
-    <Divider sx={{ my: 2 }} />
-    <Button variant="contained">Save Settings</Button>
-  </>
-);
-
 // --- Email Pane Components ---
 const EmailPane = ({ content }) => (
   <Box sx={{ flexGrow: 1, p: 3, bgcolor: "white" }}>{content}</Box>
 );
-const DefaultEmail = () => (
-  <Paper elevation={0}>
-    <Typography variant="h5">Catering Request for Penn Law</Typography>
-    <Typography variant="body2" color="text.secondary">
-      From: Ashley Duchi (ashley@law.upenn.edu)
-    </Typography>
-    <Divider sx={{ my: 2 }} />
-    <Typography>Hi Sofia,</Typography>
-    <Typography paragraph>
-      We'd like to place a catering order for a faculty lunch. We have a budget
-      of **$500** and are expecting **30 people**. We need vegetarian options
-      and prefer things that travel well.
-    </Typography>
-    <Typography>Thanks,</Typography>
-    <Typography>Ashley</Typography>
-  </Paper>
+const SettingsPage = ({ setView }) => (
+  <>
+    <BackButton onClick={() => setView("homepage")}>Back</BackButton>
+    <Typography variant="h6">Settings</Typography>
+  </>
 );
-const EmailDraft = ({ to, subject, body }) => (
-  <Card variant="outlined">
-    <CardContent>
-      <Typography color="text.secondary">To: {to}</Typography>
-      <Typography color="text.secondary">Subject: {subject}</Typography>
-      <Divider sx={{ my: 1 }} />
-      <Box sx={{ whiteSpace: "pre-wrap" }}>{body}</Box>
-      <Button variant="contained" sx={{ mt: 2 }}>
-        Send
-      </Button>
-    </CardContent>
-  </Card>
+const ProcessOrderConfirmation = ({ setView, order, openEmail }) => (
+  <>
+    <Box sx={{ textAlign: "center", my: 2 }}>
+      <CheckCircle color="success" sx={{ fontSize: 48 }} />
+      <Typography variant="h6">Order Processed!</Typography>
+    </Box>
+    <Button
+      fullWidth
+      variant="contained"
+      startIcon={<Email />}
+      sx={{ my: 2 }}
+      onClick={openEmail}
+    >
+      Open Email Draft
+    </Button>
+    <Button fullWidth sx={{ mt: 2 }} onClick={() => setView("homepage")}>
+      🏠 Back to Home
+    </Button>
+  </>
 );
 
-// --- Main App Component ---
+// --- Main App ---
 const App = () => {
   const [view, setView] = useState("homepage");
   const [customer, setCustomer] = useState(DUMMY_DATA.knownCustomer);
@@ -1202,13 +1421,12 @@ const App = () => {
   const openEmailDraft = (type) => {
     let subject, body;
     if (type === "confirmation") {
-      subject = `Your El Merkury Catering Order #${DUMMY_DATA.currentOrder.orderNum} is Confirmed!`;
+      subject = `Your Order #${DUMMY_DATA.currentOrder.orderNum} is Confirmed!`;
       body = `Dear Ashley,\n\nThank you for your order! Your invoice is attached.\n\nBest,\nSofia`;
       setView("processOrderConfirmation");
     } else {
       subject = `Menu Proposal for your Event`;
-      body = `Hi Ashley,\n\nHere are a couple of proposals for your upcoming event based on your budget...\n\nOPTION 1: Traditional Guatemalan Feast...\n\nOPTION 2: Hearty Taco Bar...`;
-      // We don't want to change the right-side view here, just the email
+      body = `Hi Ashley,\n\nHere are a couple of proposals...\n\nOPTION 1: Traditional Feast...`;
     }
     setEmailContent(
       <EmailDraft
@@ -1271,15 +1489,14 @@ const App = () => {
           />
         );
       case "editOrderSelect":
-        return (
-          <EditOrderSelect
-            setView={setView}
-            recentOrders={DUMMY_DATA.recentOrders}
-          />
-        );
+        return <SearchOrders setView={setView} orders={DUMMY_DATA.allOrders} />;
       case "editOrderScreen":
         return (
-          <EditOrderScreen setView={setView} order={DUMMY_DATA.currentOrder} />
+          <EditOrderScreen
+            setView={setView}
+            order={DUMMY_DATA.currentOrder}
+            customer={DUMMY_DATA.knownCustomer}
+          />
         );
       case "settingsPage":
         return <SettingsPage setView={setView} />;
@@ -1287,6 +1504,8 @@ const App = () => {
         return (
           <CalendarView setView={setView} events={DUMMY_DATA.calendarEvents} />
         );
+      case "searchOrders":
+        return <SearchOrders setView={setView} orders={DUMMY_DATA.allOrders} />;
       default:
         return <Homepage setView={setView} customer={customer} />;
     }
@@ -1323,5 +1542,33 @@ const App = () => {
     </ThemeProvider>
   );
 };
+
+const DefaultEmail = () => (
+  <Paper elevation={0}>
+    <Typography variant="h5">Catering Request for Penn Law</Typography>
+    <Typography variant="body2" color="text.secondary">
+      From: Ashley Duchi (ashley@law.upenn.edu)
+    </Typography>
+    <Divider sx={{ my: 2 }} />
+    <Typography>Hi Sofia,</Typography>
+    <Typography paragraph>
+      We'd like to place a catering order. We have a budget of **$500** and **30
+      people**.
+    </Typography>
+  </Paper>
+);
+const EmailDraft = ({ to, subject, body }) => (
+  <Card variant="outlined">
+    <CardContent>
+      <Typography color="text.secondary">To: {to}</Typography>
+      <Typography color="text.secondary">Subject: {subject}</Typography>
+      <Divider sx={{ my: 1 }} />
+      <Box sx={{ whiteSpace: "pre-wrap" }}>{body}</Box>
+      <Button variant="contained" sx={{ mt: 2 }}>
+        Send
+      </Button>
+    </CardContent>
+  </Card>
+);
 
 export default App;
