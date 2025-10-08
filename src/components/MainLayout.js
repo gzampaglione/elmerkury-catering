@@ -10,7 +10,7 @@ import {
 } from "@mui/material";
 import Header from "./Header";
 import { Notifications } from "@mui/icons-material";
-import NotificationsOverlay from "./states/Notifications";
+import { NotificationsOverlay } from "./states/AppStates";
 
 const AppContainer = ({ children }) => (
   <Box

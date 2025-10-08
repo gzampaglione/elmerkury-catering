@@ -14,7 +14,6 @@ import {
 } from "@mui/material";
 import { ExpandMore, CheckCircle } from "@mui/icons-material";
 import BackButton from "../components/BackButton";
-import SectionHeader from "../components/SectionHeader";
 
 const SettingsPage = ({ setView, setAppState }) => (
   <>
@@ -35,6 +34,7 @@ const SettingsPage = ({ setView, setAppState }) => (
           <Button size="small" onClick={() => setAppState("error_connection")}>
             Test
           </Button>
+          <Button size="small">Sync Menu Now</Button>
         </Box>
       </AccordionDetails>
     </Accordion>
@@ -48,14 +48,35 @@ const SettingsPage = ({ setView, setAppState }) => (
           size="small"
           label="Number of proposals"
           defaultValue="5"
+          sx={{ mb: 2 }}
         />
         <TextField
           fullWidth
           size="small"
           label="Budget buffer %"
           defaultValue="10"
-          sx={{ mt: 1 }}
+          sx={{ mb: 2 }}
         />
+        <Typography variant="caption" color="text.secondary">
+          Ingredient Preference:
+        </Typography>
+        <RadioGroup row defaultValue="high">
+          <FormControlLabel
+            value="high"
+            control={<Radio size="small" />}
+            label="High"
+          />
+          <FormControlLabel
+            value="medium"
+            control={<Radio size="small" />}
+            label="Medium"
+          />
+          <FormControlLabel
+            value="low"
+            control={<Radio size="small" />}
+            label="Low"
+          />
+        </RadioGroup>
         <FormControlLabel
           control={<Switch />}
           label="Include experimental items"
@@ -80,6 +101,13 @@ const SettingsPage = ({ setView, setAppState }) => (
           label="Payments received"
         />
         <FormControlLabel control={<Switch />} label="Daily summary" />
+        <TextField
+          fullWidth
+          size="small"
+          label="Notification Email"
+          defaultValue="sofia@elmerkury.com"
+          sx={{ mt: 1 }}
+        />
       </AccordionDetails>
     </Accordion>
     <Accordion>
@@ -90,6 +118,7 @@ const SettingsPage = ({ setView, setAppState }) => (
           control={<Switch defaultChecked />}
           label="Low inventory alerts"
         />
+        <TextField size="small" label="Alert threshold %" defaultValue="20" />
       </AccordionDetails>
     </Accordion>
     <Accordion>

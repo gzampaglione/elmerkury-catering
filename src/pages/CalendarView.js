@@ -7,7 +7,6 @@ import {
   Grid,
   Paper,
   List,
-  ListItem,
   ListItemText,
   ListItemButton,
 } from "@mui/material";
@@ -16,7 +15,7 @@ import SectionHeader from "../components/SectionHeader";
 
 const CalendarView = ({ setView, events }) => {
   const [viewMode, setViewMode] = useState("month");
-  const today = new Date("2025-10-08");
+  const today = new Date("2025-10-08"); // Pinned to Oct 2025 for consistent display
   const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
   const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
   const days = Array.from({ length: endOfMonth.getDate() }, (_, i) => i + 1);
@@ -53,7 +52,11 @@ const CalendarView = ({ setView, events }) => {
             xs={1}
             key={day}
             textAlign="center"
-            sx={{ bgcolor: "grey.200", borderRight: "1px solid #ccc" }}
+            sx={{
+              bgcolor: "grey.200",
+              borderRight: "1px solid #ccc",
+              borderBottom: "1px solid #ccc",
+            }}
           >
             <Typography variant="caption" fontWeight="bold">
               {day}

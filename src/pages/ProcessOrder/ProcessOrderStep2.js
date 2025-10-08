@@ -37,7 +37,7 @@ const ProcessOrderStep2 = ({ setView, order: initialOrder, customer }) => {
     (acc, item) => acc + item.qty * item.unitPrice,
     0
   );
-  const salesTax = customer.flags.taxExempt ? 0 : subtotal * 0.08;
+  const salesTax = customer.flags.taxExempt ? 0 : (subtotal - discount) * 0.08;
   const finalSubtotal = subtotal - discount;
   const total =
     finalSubtotal +
@@ -140,6 +140,9 @@ const ProcessOrderStep2 = ({ setView, order: initialOrder, customer }) => {
                       <Typography variant="caption">
                         ${estLaborCost.toFixed(2)}
                       </Typography>
+                    </Grid>
+                    <Grid item xs={12}>
+                      <Divider sx={{ my: 0.5 }} />
                     </Grid>
                     <Grid item xs={7}>
                       <Tooltip title="Line Total - Food & Labor">
@@ -288,7 +291,11 @@ const ProcessOrderStep2 = ({ setView, order: initialOrder, customer }) => {
               >
                 Apply Discount
               </Button>
-              <Button size="small" sx={{ color: "white", ml: 1 }}>
+              <Button
+                size="small"
+                sx={{ color: "white", ml: 1 }}
+                onClick={() => setDiscount(0)}
+              >
                 Send Without
               </Button>
             </Box>

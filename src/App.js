@@ -23,11 +23,16 @@ import CalendarView from "./pages/CalendarView";
 import { DUMMY_DATA } from "./data/dummyData";
 import { theme } from "./theme";
 import { CheckCircle, Email as EmailIcon } from "@mui/icons-material";
+import { HelpTip } from "./components/states/AppStates";
 import {
-  LoadingState,
-  ErrorState,
-  HelpTip,
-} from "./components/states/AppStates";
+  GeneratingProposalsState,
+  ProcessingOrderState,
+} from "./components/states/LoadingStates";
+import {
+  ConnectionErrorState,
+  PartialSuccessState,
+  ValidationErrorState,
+} from "./components/states/ErrorStates";
 
 const EmailDraft = ({ to, subject, body }) => (
   <Card variant="outlined">
@@ -105,7 +110,7 @@ const App = () => {
     },
   ]);
   const [showNotifications, setShowNotifications] = useState(false);
-  const [appState, setAppState] = useState("normal"); // 'normal', 'loading', 'error_connection', 'error_validation'
+  const [appState, setAppState] = useState("normal"); // 'normal', 'loading_proposals', 'loading_processing', 'error_connection', 'error_validation', 'error_partial'
   const [showHelpTip, setShowHelpTip] = useState(false);
 
   const openEmailDraft = (type) => {
@@ -129,23 +134,25 @@ const App = () => {
 
   const renderView = () => {
     // Handle global app states first
-    if (appState.startsWith("loading")) {
-      return (
-        <LoadingState
-          type={appState.split("_")[1]}
-          message="Generating Proposals..."
-          progress={40}
-        />
-      );
+    if (appState === "loading_proposals") {
+      return <GeneratingProposalsState />;
     }
-    if (appState.startsWith("error")) {
+    if (appState === "loading_processing") {
+      return <ProcessingOrderState progress={40} />;
+    }
+    if (appState === "error_connection") {
       return (
-        <ErrorState
-          type={appState.split("_")[1]}
+        <ConnectionErrorState
           onRetry={() => setAppState("normal")}
           onContinue={() => setAppState("normal")}
         />
       );
+    }
+    if (appState === "error_validation") {
+      return <ValidationErrorState onFix={() => setAppState("normal")} />;
+    }
+    if (appState === "error_partial") {
+      return <PartialSuccessState onRetry={() => setAppState("normal")} />;
     }
 
     // Normal view rendering

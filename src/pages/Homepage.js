@@ -10,6 +10,7 @@ import {
   ListItem,
   ListItemIcon,
   ListItemText,
+  ListItemButton,
 } from "@mui/material";
 import {
   BusinessCenter,
@@ -91,7 +92,10 @@ const Homepage = ({ setView, customer, recentOrders }) => (
     </Button>
     <List dense>
       {recentOrders.slice(0, 5).map((order) => (
-        <ListItem key={order.id} disablePadding>
+        <ListItemButton
+          key={order.id}
+          onClick={() => setView("editOrderScreen")}
+        >
           <ListItemIcon sx={{ minWidth: 30 }}>
             {order.status === "scheduled" ? (
               <Event color="primary" />
@@ -103,7 +107,7 @@ const Homepage = ({ setView, customer, recentOrders }) => (
             primary={`${order.customer} - ${order.date}`}
             secondary={`$${order.total.toFixed(2)}`}
           />
-        </ListItem>
+        </ListItemButton>
       ))}
     </List>
     <Box sx={{ display: "flex", justifyContent: "space-between", mt: 2 }}>
