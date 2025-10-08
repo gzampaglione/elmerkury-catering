@@ -1,22 +1,29 @@
 import React from "react";
 import {
-  Alert,
   Box,
   Paper,
-  Grid,
   Divider,
-  TextField,
-  RadioGroup,
-  FormControlLabel,
-  Radio,
   Button,
   Typography,
+  Table,
+  TableBody,
+  TableCell,
+  TableRow,
+  TableContainer,
+  TableHead,
+  IconButton,
+  Alert,
 } from "@mui/material";
-import { CheckCircle } from "@mui/icons-material";
+import { CheckCircle, Edit } from "@mui/icons-material";
 import BackButton from "../../components/BackButton";
 import SectionHeader from "../../components/SectionHeader";
 
-const ProcessOrderStep3 = ({ setView, order, customer }) => {
+const ProcessOrderStep3 = ({
+  setView,
+  order,
+  customer,
+  handleProcessOrder,
+}) => {
   const subtotal = order.items.reduce(
     (acc, item) => acc + item.qty * item.unitPrice,
     0
@@ -31,13 +38,44 @@ const ProcessOrderStep3 = ({ setView, order, customer }) => {
     parseFloat(order.tip) +
     utensilsTotal +
     salesTax;
+
+  const totalFoodCost = order.items.reduce(
+    (acc, item) => acc + item.qty * item.estFoodCost,
+    0
+  );
+  const totalLaborCost = order.items.reduce(
+    (acc, item) => acc + item.qty * (item.estLaborHours * 25),
+    0
+  ); // Assuming $25/hr
+  const grossProfit = subtotal - totalFoodCost - totalLaborCost;
+  const estProfit = grossProfit - parseFloat(order.deliveryFee || 0);
+  const estProfitPercent = (estProfit / subtotal) * 100 || 0;
+
+  // Mock conflict for demonstration
+  const conflict = true;
+
   return (
     <>
       <BackButton onClick={() => setView("processOrderStep2")}>Back</BackButton>
       <Typography variant="h6">Step 3 of 3: Final Review</Typography>
-      <SectionHeader>Delivery Information</SectionHeader>
+      <SectionHeader>
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            width: "100%",
+            justifyContent: "space-between",
+          }}
+        >
+          Delivery Information
+          <IconButton size="small" onClick={() => setView("processOrderStep1")}>
+            <Edit fontSize="inherit" />
+          </IconButton>
+        </Box>
+      </SectionHeader>
       <Paper variant="outlined" sx={{ p: 2 }}>
-        <Typography fontWeight="bold">{customer.contactName}</Typography>
+        <Typography fontWeight="bold">{customer.name}</Typography>
+        <Typography variant="body2">{customer.contactName}</Typography>
         <Typography variant="body2">
           {customer.address.line1}, {customer.address.line2}
         </Typography>
@@ -46,88 +84,119 @@ const ProcessOrderStep3 = ({ setView, order, customer }) => {
           {customer.address.zip}
         </Typography>
         <Divider sx={{ my: 1 }} />
-        <Typography variant="body2" fontWeight="bold">
-          📅 May 20, 2025 at 12:30 PM
-        </Typography>
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
+          <Typography variant="body2" fontWeight="bold">
+            📅 May 20, 2025 at 12:30 PM
+          </Typography>
+          <Alert severity={conflict ? "error" : "success"} sx={{ p: "0 8px" }}>
+            {conflict ? "Conflict" : "No Conflict"}
+          </Alert>
+        </Box>
       </Paper>
-      <SectionHeader>Order Summary</SectionHeader>
-      <Paper variant="outlined" sx={{ p: 2, my: 2 }}>
-        <Grid container spacing={1}>
-          {order.items.map((i) => (
-            <React.Fragment key={i.id}>
-              <Grid item xs={8}>
-                {i.qty}× {i.matchedItem}
-              </Grid>
-              <Grid item xs={4} textAlign="right">
-                ${(i.qty * i.unitPrice).toFixed(2)}
-              </Grid>
-            </React.Fragment>
-          ))}
-          <Grid item xs={12}>
-            <Divider sx={{ my: 1 }} />
-          </Grid>
-          <Grid item xs={8}>
-            Items Subtotal
-          </Grid>
-          <Grid item xs={4} textAlign="right">
-            ${subtotal.toFixed(2)}
-          </Grid>
-          <Grid item xs={8}>
-            Sales Tax
-          </Grid>
-          <Grid item xs={4} textAlign="right">
-            {customer.flags.taxExempt ? "Exempt" : `$${salesTax.toFixed(2)}`}
-          </Grid>
-          <Grid item xs={8}>
-            Delivery Fee
-          </Grid>
-          <Grid item xs={4} textAlign="right">
-            ${parseFloat(order.deliveryFee).toFixed(2)}
-          </Grid>
-          <Grid item xs={8}>
-            Tip
-          </Grid>
-          <Grid item xs={4} textAlign="right">
-            ${parseFloat(order.tip).toFixed(2)}
-          </Grid>
-          <Grid item xs={8}>
-            Utensils ({order.utensils.count} sets)
-          </Grid>
-          <Grid item xs={4} textAlign="right">
-            ${utensilsTotal.toFixed(2)}
-          </Grid>
-          <Grid item xs={12}>
-            <Divider sx={{ my: 1 }} />
-          </Grid>
-          <Grid item xs={8}>
-            <Typography fontWeight="bold">Grand Total</Typography>
-          </Grid>
-          <Grid item xs={4} textAlign="right">
-            <Typography fontWeight="bold">${total.toFixed(2)}</Typography>
-          </Grid>
-        </Grid>
-      </Paper>
-      {customer.flags.requiresPO && (
-        <>
-          <SectionHeader>Penn Special Handling</SectionHeader>
-          <Alert severity="warning">This customer requires a PO</Alert>
-          <RadioGroup row defaultValue="final">
-            <FormControlLabel
-              value="preliminary"
-              control={<Radio />}
-              label="Preliminary"
-            />
-            <FormControlLabel value="final" control={<Radio />} label="Final" />
-          </RadioGroup>
-          <TextField
-            fullWidth
-            label="PO Number"
-            defaultValue="PO-2025-456"
-            margin="dense"
-            size="small"
-          />
-        </>
-      )}
+      <SectionHeader>
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            width: "100%",
+            justifyContent: "space-between",
+          }}
+        >
+          Order Summary
+          <IconButton size="small" onClick={() => setView("processOrderStep2")}>
+            <Edit fontSize="inherit" />
+          </IconButton>
+        </Box>
+      </SectionHeader>
+      <TableContainer component={Paper} variant="outlined" sx={{ my: 2 }}>
+        <Table size="small">
+          <TableHead>
+            <TableRow>
+              <TableCell>Qty</TableCell>
+              <TableCell>Item</TableCell>
+              <TableCell align="right">Price</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {order.items.map((i) => (
+              <TableRow key={i.id}>
+                <TableCell>{i.qty}</TableCell>
+                <TableCell>{i.matchedItem}</TableCell>
+                <TableCell align="right">
+                  ${(i.qty * i.unitPrice).toFixed(2)}
+                </TableCell>
+              </TableRow>
+            ))}
+            <TableRow>
+              <TableCell colSpan={3}>
+                <Divider />
+              </TableCell>
+            </TableRow>
+            <TableRow>
+              <TableCell colSpan={2} align="right">
+                <Typography fontWeight="bold">Items Subtotal</Typography>
+              </TableCell>
+              <TableCell align="right">
+                <Typography fontWeight="bold">
+                  ${subtotal.toFixed(2)}
+                </Typography>
+              </TableCell>
+            </TableRow>
+            <TableRow>
+              <TableCell colSpan={2} align="right">
+                Delivery Fee
+              </TableCell>
+              <TableCell align="right">
+                ${parseFloat(order.deliveryFee).toFixed(2)}
+              </TableCell>
+            </TableRow>
+            <TableRow>
+              <TableCell colSpan={2} align="right">
+                Tip
+              </TableCell>
+              <TableCell align="right">
+                ${parseFloat(order.tip).toFixed(2)}
+              </TableCell>
+            </TableRow>
+            <TableRow>
+              <TableCell colSpan={2} align="right">
+                Utensils ({order.utensils.count} sets)
+              </TableCell>
+              <TableCell align="right">${utensilsTotal.toFixed(2)}</TableCell>
+            </TableRow>
+            <TableRow>
+              <TableCell colSpan={2} align="right">
+                Sales Tax
+              </TableCell>
+              <TableCell align="right">
+                {customer.flags.taxExempt
+                  ? "Exempt"
+                  : `$${salesTax.toFixed(2)}`}
+              </TableCell>
+            </TableRow>
+            <TableRow>
+              <TableCell colSpan={3}>
+                <Divider />
+              </TableCell>
+            </TableRow>
+            <TableRow>
+              <TableCell colSpan={2} align="right">
+                <Typography fontWeight="bold">Grand Total</Typography>
+              </TableCell>
+              <TableCell align="right">
+                <Typography fontWeight="bold">${total.toFixed(2)}</Typography>
+              </TableCell>
+            </TableRow>
+          </TableBody>
+        </Table>
+      </TableContainer>
+
       <Button
         fullWidth
         variant="contained"
@@ -135,7 +204,7 @@ const ProcessOrderStep3 = ({ setView, order, customer }) => {
         size="large"
         sx={{ mt: 2 }}
         startIcon={<CheckCircle />}
-        onClick={() => setView("processOrderConfirmation")}
+        onClick={handleProcessOrder}
       >
         PROCESS ORDER
       </Button>

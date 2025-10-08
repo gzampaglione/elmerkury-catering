@@ -1,49 +1,46 @@
 import React, { useState } from "react";
 import {
-  Alert,
   Box,
-  Card,
-  CardContent,
-  Grid,
-  MenuItem,
-  Select,
-  TextField,
-  Tooltip,
   Typography,
   IconButton,
   Paper,
-  Divider,
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
   Button,
   Chip,
+  Table,
+  TableBody,
+  TableCell,
+  TableRow,
+  TableContainer,
+  TextField,
 } from "@mui/material";
-import {
-  Edit,
-  Info,
-  RemoveCircleOutline,
-  ExpandMore,
-  ArrowForwardIos,
-} from "@mui/icons-material";
+import { Edit, Info, ArrowForwardIos, Add } from "@mui/icons-material";
 import BackButton from "../../components/BackButton";
 import SectionHeader from "../../components/SectionHeader";
+import Step2_ItemCard from "./Step2_ItemCard";
+import Step2_VolumeDiscount from "./Step2_VolumeDiscount";
+import Step2_OrderProfitability from "./Step2_OrderProfitability";
 
 const ProcessOrderStep2 = ({ setView, order: initialOrder, customer }) => {
-  const [order, setOrder] = useState(initialOrder);
+  const [order] = useState(initialOrder);
   const [discount, setDiscount] = useState(0);
+  const [tip, setTip] = useState(initialOrder.tip);
+  const [isEditingTip, setIsEditingTip] = useState(false);
+  const [deliveryFee, setDeliveryFee] = useState(initialOrder.deliveryFee);
+  const [isEditingDeliveryFee, setIsEditingDeliveryFee] = useState(false);
+  const [isTaxExempt, setIsTaxExempt] = useState(customer.flags.taxExempt);
 
   const subtotal = order.items.reduce(
     (acc, item) => acc + item.qty * item.unitPrice,
     0
   );
-  const salesTax = customer.flags.taxExempt ? 0 : (subtotal - discount) * 0.08;
+
+  const utensilsTotal = order.utensils.included
+    ? order.utensils.count * order.utensils.costPer
+    : 0;
+
+  const salesTax = isTaxExempt ? 0 : (subtotal - discount) * 0.08;
   const finalSubtotal = subtotal - discount;
-  const total =
-    finalSubtotal +
-    parseFloat(order.deliveryFee || 0) +
-    parseFloat(order.tip || 0) +
-    salesTax;
+  const total = finalSubtotal + utensilsTotal + deliveryFee + tip + salesTax;
 
   const totalFoodCost = order.items.reduce(
     (acc, item) => acc + item.qty * item.estFoodCost,
@@ -54,7 +51,7 @@ const ProcessOrderStep2 = ({ setView, order: initialOrder, customer }) => {
     0
   ); // Assuming $25/hr
   const grossProfit = subtotal - totalFoodCost - totalLaborCost;
-  const estProfit = grossProfit - parseFloat(order.deliveryFee || 0) - discount;
+  const estProfit = grossProfit - deliveryFee - discount;
   const estProfitPercent = (estProfit / finalSubtotal) * 100 || 0;
 
   return (
@@ -62,285 +59,180 @@ const ProcessOrderStep2 = ({ setView, order: initialOrder, customer }) => {
       <BackButton onClick={() => setView("processOrderStep1")}>Back</BackButton>
       <Typography variant="h6">Step 2 of 3: Items & Pricing</Typography>
       <SectionHeader>
-        Items Ordered{" "}
-        <Tooltip title="Pulled from Toast">
-          <Info fontSize="small" sx={{ ml: 1 }} color="disabled" />
-        </Tooltip>
+        Items Ordered ({order.items.length} AI recognized)
       </SectionHeader>
-      {order.items.map((item) => {
-        const lineTotal = item.qty * item.unitPrice;
-        const estLaborCost = item.qty * item.estLaborHours * 25;
-        const estFoodCost = item.qty * item.estFoodCost;
-        const grossMargin = lineTotal - estFoodCost - estLaborCost;
-        return (
-          <Card key={item.id} variant="outlined" sx={{ mb: 1.5 }}>
-            <CardContent>
-              <Typography variant="caption" color="text.secondary">
-                Email: "{item.emailDesc}"
-              </Typography>
-              <Grid container alignItems="center" spacing={1} sx={{ my: 1 }}>
-                <Grid item xs={12}>
-                  <Select
-                    fullWidth
-                    defaultValue={item.matchedItem}
+      {order.items.map((item) => (
+        <Step2_ItemCard key={item.id} item={item} />
+      ))}
+      <Button startIcon={<Add />} size="small" sx={{ mt: 1 }}>
+        Add Item
+      </Button>
+
+      <TableContainer component={Paper} variant="outlined" sx={{ my: 2 }}>
+        <Table size="small">
+          <TableBody>
+            <TableRow>
+              <TableCell>
+                <Typography fontWeight="bold">Items Subtotal</Typography>
+              </TableCell>
+              <TableCell align="right">
+                <Typography fontWeight="bold">
+                  ${subtotal.toFixed(2)}
+                </Typography>
+              </TableCell>
+            </TableRow>
+            {discount > 0 && (
+              <TableRow>
+                <TableCell>
+                  <Typography color="success.main">Loyalty Discount</Typography>
+                </TableCell>
+                <TableCell align="right">
+                  <Typography color="success.main">
+                    - ${discount.toFixed(2)}
+                  </Typography>
+                </TableCell>
+              </TableRow>
+            )}
+            <TableRow>
+              <TableCell>Utensils ({order.utensils.count} sets)</TableCell>
+              <TableCell align="right">${utensilsTotal.toFixed(2)}</TableCell>
+            </TableRow>
+            <TableRow>
+              <TableCell>
+                <Box sx={{ display: "flex", alignItems: "center" }}>
+                  <IconButton
                     size="small"
+                    sx={{ mr: 1 }}
+                    onClick={() => setIsEditingTip(!isEditingTip)}
                   >
-                    <MenuItem value={item.matchedItem}>
-                      {item.matchedItem}
-                    </MenuItem>
-                  </Select>
-                </Grid>
-                <Grid item xs={4}>
+                    <Edit fontSize="inherit" />
+                  </IconButton>
+                  Tip
+                </Box>
+              </TableCell>
+              <TableCell align="right">
+                {isEditingTip ? (
                   <TextField
-                    label="Qty"
-                    defaultValue={item.qty}
+                    value={tip}
+                    onChange={(e) => setTip(parseFloat(e.target.value) || 0)}
                     size="small"
                     type="number"
-                  />
-                </Grid>
-                <Grid item xs={4}>
-                  <TextField
-                    label="Price"
-                    defaultValue={item.unitPrice.toFixed(2)}
-                    size="small"
+                    sx={{ width: 80 }}
                     InputProps={{ startAdornment: "$" }}
+                    onBlur={() => setIsEditingTip(false)}
+                    autoFocus
                   />
-                </Grid>
-                <Grid item xs={4}>
-                  <Typography textAlign="right" fontWeight="bold">
-                    ${lineTotal.toFixed(2)}
-                  </Typography>
-                </Grid>
-              </Grid>
-              <TextField
-                fullWidth
-                label="Flavors/Notes"
-                defaultValue={item.notes}
-                size="small"
-                margin="dense"
-              />
-              <Accordion sx={{ mt: 1, boxShadow: "none", bgcolor: "grey.50" }}>
-                <AccordionSummary expandIcon={<ExpandMore />}>
-                  <Typography variant="caption">Profitability</Typography>
-                </AccordionSummary>
-                <AccordionDetails>
-                  <Grid container>
-                    <Grid item xs={7}>
-                      <Typography variant="caption">Est Food Cost:</Typography>
-                    </Grid>
-                    <Grid item xs={5} textAlign="right">
-                      <Typography variant="caption">
-                        ${estFoodCost.toFixed(2)}
-                      </Typography>
-                    </Grid>
-                    <Grid item xs={7}>
-                      <Typography variant="caption">Est Labor Cost:</Typography>
-                    </Grid>
-                    <Grid item xs={5} textAlign="right">
-                      <Typography variant="caption">
-                        ${estLaborCost.toFixed(2)}
-                      </Typography>
-                    </Grid>
-                    <Grid item xs={12}>
-                      <Divider sx={{ my: 0.5 }} />
-                    </Grid>
-                    <Grid item xs={7}>
-                      <Tooltip title="Line Total - Food & Labor">
-                        <Typography variant="caption" fontWeight="bold">
-                          Gross Margin:
-                        </Typography>
-                      </Tooltip>
-                    </Grid>
-                    <Grid item xs={5} textAlign="right">
-                      <Typography
-                        variant="caption"
-                        fontWeight="bold"
-                        color="success.main"
-                      >
-                        ${grossMargin.toFixed(2)}
-                      </Typography>
-                    </Grid>
-                  </Grid>
-                </AccordionDetails>
-              </Accordion>
-              <Button
-                fullWidth
-                size="small"
-                startIcon={<RemoveCircleOutline />}
-                sx={{ mt: 1, color: "error.main" }}
-              >
-                Remove Item
-              </Button>
-            </CardContent>
-          </Card>
-        );
-      })}
-
-      <Paper variant="outlined" sx={{ p: 2, my: 2 }}>
-        <Grid container spacing={1} alignItems="center">
-          <Grid item xs={6}>
-            Items Subtotal
-          </Grid>
-          <Grid item xs={6} textAlign="right">
-            ${subtotal.toFixed(2)}
-          </Grid>
-          {discount > 0 && (
-            <>
-              <Grid item xs={6}>
-                <Typography color="success.main">Loyalty Discount</Typography>
-              </Grid>
-              <Grid item xs={6} textAlign="right">
-                <Typography color="success.main">
-                  - ${discount.toFixed(2)}
+                ) : (
+                  `$${tip.toFixed(2)}`
+                )}
+              </TableCell>
+            </TableRow>
+            <TableRow>
+              <TableCell>
+                <Box sx={{ display: "flex", alignItems: "center" }}>
+                  <IconButton
+                    size="small"
+                    sx={{ mr: 1 }}
+                    onClick={() =>
+                      setIsEditingDeliveryFee(!isEditingDeliveryFee)
+                    }
+                  >
+                    <Edit fontSize="inherit" />
+                  </IconButton>
+                  Delivery Fee
+                </Box>
+              </TableCell>
+              <TableCell align="right">
+                {isEditingDeliveryFee ? (
+                  <TextField
+                    value={deliveryFee}
+                    onChange={(e) =>
+                      setDeliveryFee(parseFloat(e.target.value) || 0)
+                    }
+                    size="small"
+                    type="number"
+                    sx={{ width: 80 }}
+                    InputProps={{ startAdornment: "$" }}
+                    onBlur={() => setIsEditingDeliveryFee(false)}
+                    autoFocus
+                  />
+                ) : (
+                  `$${deliveryFee.toFixed(2)}`
+                )}
+              </TableCell>
+            </TableRow>
+            <TableRow>
+              <TableCell>
+                <Box sx={{ display: "flex", alignItems: "center" }}>
+                  <IconButton
+                    size="small"
+                    sx={{ mr: 1 }}
+                    onClick={() => setIsTaxExempt(!isTaxExempt)}
+                  >
+                    <Typography
+                      variant="caption"
+                      sx={{ border: "1px solid", px: 0.5, borderRadius: 1 }}
+                    >
+                      {isTaxExempt ? "Exempt" : "NA"}
+                    </Typography>
+                  </IconButton>
+                  Sales Tax (8%)
+                </Box>
+              </TableCell>
+              <TableCell align="right">
+                {isTaxExempt ? (
+                  <Chip label="Tax Exempt" size="small" color="success" />
+                ) : (
+                  `$${salesTax.toFixed(2)}`
+                )}
+              </TableCell>
+            </TableRow>
+            <TableRow sx={{ "& td": { border: 0 } }}>
+              <TableCell>
+                <Typography variant="h6">Total</Typography>
+              </TableCell>
+              <TableCell align="right">
+                <Typography variant="h6">${total.toFixed(2)}</Typography>
+              </TableCell>
+            </TableRow>
+            <TableRow>
+              <TableCell>
+                <Typography
+                  fontWeight="bold"
+                  color={estProfit > 0 ? "success.main" : "error.main"}
+                >
+                  Est. Margin
                 </Typography>
-              </Grid>
-            </>
-          )}
-          <Grid item xs={5}>
-            Tip
-          </Grid>
-          <Grid item xs={6} textAlign="right">
-            ${parseFloat(order.tip || 0).toFixed(2)}
-          </Grid>
-          <Grid item xs={1} textAlign="right">
-            <IconButton size="small">
-              <Edit fontSize="inherit" />
-            </IconButton>
-          </Grid>
-          <Grid item xs={5}>
-            Delivery Fee
-          </Grid>
-          <Grid item xs={6} textAlign="right">
-            ${parseFloat(order.deliveryFee || 0).toFixed(2)}
-          </Grid>
-          <Grid item xs={1} textAlign="right">
-            <IconButton size="small">
-              <Edit fontSize="inherit" />
-            </IconButton>
-          </Grid>
-          <Grid item xs={6}>
-            Sales Tax (8%)
-          </Grid>
-          <Grid item xs={6} textAlign="right">
-            {customer.flags.taxExempt ? (
-              <Chip label="Tax Exempt" size="small" color="success" />
-            ) : (
-              `$${salesTax.toFixed(2)}`
-            )}
-          </Grid>
-          <Grid item xs={12}>
-            <Divider sx={{ my: 1 }} />
-          </Grid>
-          <Grid item xs={6}>
-            <Typography variant="h6">Total</Typography>
-          </Grid>
-          <Grid item xs={6} textAlign="right">
-            <Typography variant="h6">${total.toFixed(2)}</Typography>
-          </Grid>
-          <Grid item xs={6}>
-            <Typography
-              fontWeight="bold"
-              color={estProfit > 0 ? "success.main" : "error.main"}
-            >
-              Est. Profit
-            </Typography>
-          </Grid>
-          <Grid item xs={6} textAlign="right">
-            <Typography
-              fontWeight="bold"
-              color={estProfit > 0 ? "success.main" : "error.main"}
-            >
-              ${estProfit.toFixed(2)} ({estProfitPercent.toFixed(1)}%)
-            </Typography>
-          </Grid>
-        </Grid>
-      </Paper>
+              </TableCell>
+              <TableCell align="right">
+                <Typography
+                  fontWeight="bold"
+                  color={estProfit > 0 ? "success.main" : "error.main"}
+                >
+                  ${estProfit.toFixed(2)} ({estProfitPercent.toFixed(1)}%)
+                </Typography>
+              </TableCell>
+            </TableRow>
+          </TableBody>
+        </Table>
+      </TableContainer>
 
-      {customer.name === "Penn Law" && (
-        <Card
-          variant="outlined"
-          sx={{ my: 2, bgcolor: "info.main", color: "white" }}
-        >
-          <CardContent>
-            <Typography fontWeight="bold">
-              💰 Volume Discount Opportunity
-            </Typography>
-            <Typography variant="body2">
-              {customer.name} - Loyal Customer ⭐
-            </Typography>
-            <Divider sx={{ my: 1, borderColor: "rgba(255,255,255,0.2)" }} />
-            <Typography variant="caption">
-              SUGGESTION: Offer 10% loyalty discount ($
-              {(subtotal * 0.1).toFixed(2)})
-            </Typography>
-            <Typography variant="caption" display="block">
-              New Total: ${(total - subtotal * 0.1).toFixed(2)} | New Margin:{" "}
-              {(
-                ((estProfit + discount - subtotal * 0.1) /
-                  (finalSubtotal - subtotal * 0.1)) *
-                100
-              ).toFixed(1)}
-              % ✅
-            </Typography>
-            <Box mt={1}>
-              <Button
-                size="small"
-                variant="contained"
-                color="success"
-                onClick={() => setDiscount(subtotal * 0.1)}
-              >
-                Apply Discount
-              </Button>
-              <Button
-                size="small"
-                sx={{ color: "white", ml: 1 }}
-                onClick={() => setDiscount(0)}
-              >
-                Send Without
-              </Button>
-            </Box>
-          </CardContent>
-        </Card>
-      )}
+      <Step2_VolumeDiscount
+        customer={customer}
+        subtotal={subtotal}
+        total={total}
+        estProfit={estProfit}
+        discount={discount}
+        finalSubtotal={finalSubtotal}
+        setDiscount={setDiscount}
+      />
 
-      <Accordion>
-        <AccordionSummary expandIcon={<ExpandMore />}>
-          Order Profitability Details
-        </AccordionSummary>
-        <AccordionDetails>
-          <Grid container spacing={0.5}>
-            <Grid item xs={6}>
-              <Typography>Revenue:</Typography>
-            </Grid>
-            <Grid item xs={6} textAlign="right">
-              <Typography>${finalSubtotal.toFixed(2)}</Typography>
-            </Grid>
-            <Grid item xs={6}>
-              <Typography>Est Food Cost:</Typography>
-            </Grid>
-            <Grid item xs={6} textAlign="right">
-              <Typography>- ${totalFoodCost.toFixed(2)}</Typography>
-            </Grid>
-            <Grid item xs={6}>
-              <Typography>Est Labor Cost:</Typography>
-            </Grid>
-            <Grid item xs={6} textAlign="right">
-              <Typography>- ${totalLaborCost.toFixed(2)}</Typography>
-            </Grid>
-            <Grid item xs={12}>
-              <Divider sx={{ my: 0.5 }} />
-            </Grid>
-            <Grid item xs={6}>
-              <Typography fontWeight="bold">Gross Profit:</Typography>
-            </Grid>
-            <Grid item xs={6} textAlign="right">
-              <Typography fontWeight="bold">
-                ${(finalSubtotal - totalFoodCost - totalLaborCost).toFixed(2)}
-              </Typography>
-            </Grid>
-          </Grid>
-        </AccordionDetails>
-      </Accordion>
+      <Step2_OrderProfitability
+        finalSubtotal={finalSubtotal}
+        totalFoodCost={totalFoodCost}
+        totalLaborCost={totalLaborCost}
+      />
+
       <Button
         fullWidth
         variant="contained"

@@ -10,13 +10,25 @@ import {
   Tooltip,
   Typography,
   Button,
+  FormControlLabel,
+  Switch,
+  Divider,
 } from "@mui/material";
-import { AccessTime, CalendarMonth, Info } from "@mui/icons-material";
+import {
+  AccessTime,
+  CalendarMonth,
+  Info,
+  ArrowForwardIos,
+} from "@mui/icons-material";
 import BackButton from "../../components/BackButton";
 import SectionHeader from "../../components/SectionHeader";
 
 const ProcessOrderStep1 = ({ setView, customer, order, setShowHelpTip }) => {
   const [deliveryTime, setDeliveryTime] = useState("12:30");
+  const [utensils, setUtensils] = useState({
+    included: order.utensils.included,
+    count: order.utensils.count,
+  });
   const conflict = deliveryTime === "12:30";
 
   useEffect(() => {
@@ -29,6 +41,14 @@ const ProcessOrderStep1 = ({ setView, customer, order, setShowHelpTip }) => {
     // Cleanup on component unmount
     return () => setShowHelpTip(false);
   }, [customer, setShowHelpTip]);
+
+  const handleUtensilsChange = (event) => {
+    setUtensils({ ...utensils, included: event.target.checked });
+  };
+
+  const handleUtensilCountChange = (event) => {
+    setUtensils({ ...utensils, count: parseInt(event.target.value, 10) || 0 });
+  };
 
   return (
     <>
@@ -50,6 +70,22 @@ const ProcessOrderStep1 = ({ setView, customer, order, setShowHelpTip }) => {
         margin="dense"
         size="small"
       />
+      <TextField
+        fullWidth
+        label="Customer Email"
+        defaultValue={customer.contactEmail}
+        margin="dense"
+        size="small"
+        type="email"
+      />
+      <TextField
+        fullWidth
+        label="Customer Phone"
+        defaultValue={customer.contactPhone}
+        margin="dense"
+        size="small"
+        type="tel"
+      />
       <Select fullWidth defaultValue={customer.name} size="small">
         <MenuItem value="Penn Law">Penn Law</MenuItem>
         <MenuItem value="Wharton">Wharton</MenuItem>
@@ -68,7 +104,7 @@ const ProcessOrderStep1 = ({ setView, customer, order, setShowHelpTip }) => {
             </Grid>
             <Grid item xs={6}>
               <Typography variant="caption" display="block">
-                Total Volume:
+                YTD Spend:
               </Typography>
               <Typography variant="body2" fontWeight="500">
                 ${customer.ytdSpend.toLocaleString()}
@@ -101,6 +137,30 @@ const ProcessOrderStep1 = ({ setView, customer, order, setShowHelpTip }) => {
         </Card>
       )}
       <SectionHeader>Delivery Details</SectionHeader>
+      <Tooltip title="Leave blank if same as customer">
+        <Box>
+          <Typography variant="overline" color="text.secondary">
+            Contact
+          </Typography>
+          <TextField
+            fullWidth
+            label="Delivery Contact Name"
+            margin="dense"
+            size="small"
+          />
+          <TextField
+            fullWidth
+            label="Delivery Contact Phone"
+            margin="dense"
+            size="small"
+            type="tel"
+          />
+        </Box>
+      </Tooltip>
+      <Divider sx={{ my: 1.5 }} />
+      <Typography variant="overline" color="text.secondary">
+        Address
+      </Typography>
       <TextField
         fullWidth
         label="Address Line 1"
@@ -129,14 +189,10 @@ const ProcessOrderStep1 = ({ setView, customer, order, setShowHelpTip }) => {
           size="small"
         />
       </Box>
-      <Tooltip title="Leave blank if same as customer">
-        <TextField
-          fullWidth
-          label="Delivery Contact Name"
-          margin="dense"
-          size="small"
-        />
-      </Tooltip>
+      <Divider sx={{ my: 1.5 }} />
+      <Typography variant="overline" color="text.secondary">
+        Date & Time
+      </Typography>
       <Box sx={{ display: "flex", gap: 1, mt: 1 }}>
         <TextField
           fullWidth
@@ -171,9 +227,35 @@ const ProcessOrderStep1 = ({ setView, customer, order, setShowHelpTip }) => {
           {conflict ? "Conflict: SIG Delivery at 12:00 PM" : "No Conflict"}
         </Alert>
       </Tooltip>
+      <Divider sx={{ my: 1.5 }} />
+      <Typography variant="overline" color="text.secondary">
+        Add-ons
+      </Typography>
+      <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+        <FormControlLabel
+          control={
+            <Switch
+              checked={utensils.included}
+              onChange={handleUtensilsChange}
+            />
+          }
+          label="Utensils"
+        />
+        {utensils.included && (
+          <TextField
+            label="How many?"
+            type="number"
+            size="small"
+            value={utensils.count}
+            onChange={handleUtensilCountChange}
+            sx={{ width: 120 }}
+          />
+        )}
+      </Box>
       <Button
         fullWidth
         variant="contained"
+        endIcon={<ArrowForwardIos />}
         sx={{ mt: 2 }}
         onClick={() => setView("processOrderStep2")}
       >

@@ -111,7 +111,7 @@ const GenerateProposalStep2 = ({ setView, initialProposals, openEmail }) => {
                       handleItemChange(p.id, item.id, "qty", e.target.value)
                     }
                     type="number"
-                    sx={{ width: 70 }}
+                    sx={{ width: 80 }}
                   />
                   <TextField
                     fullWidth
@@ -130,7 +130,7 @@ const GenerateProposalStep2 = ({ setView, initialProposals, openEmail }) => {
                       handleItemChange(p.id, item.id, "price", e.target.value)
                     }
                     type="number"
-                    sx={{ width: 80 }}
+                    sx={{ width: 100 }}
                     InputProps={{ startAdornment: "$" }}
                   />
                   <IconButton

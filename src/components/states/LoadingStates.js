@@ -5,7 +5,6 @@ import {
   LinearProgress,
   CircularProgress,
 } from "@mui/material";
-import { CheckCircle } from "@mui/icons-material";
 
 export const ProcessingOrderState = ({ progress }) => (
   <Box p={2}>

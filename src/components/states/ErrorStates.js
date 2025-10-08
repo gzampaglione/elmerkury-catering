@@ -1,6 +1,6 @@
 import React from "react";
 import { Alert, Box, Typography, Button } from "@mui/material";
-import { CheckCircle, Warning } from "@mui/icons-material";
+import { Warning } from "@mui/icons-material";
 
 export const ConnectionErrorState = ({ onRetry, onContinue }) => (
   <Alert severity="error" icon={<Warning fontSize="inherit" />}>

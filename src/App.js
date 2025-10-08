@@ -132,6 +132,14 @@ const App = () => {
     );
   };
 
+  const handleProcessOrder = () => {
+    setAppState("loading_processing");
+    setTimeout(() => {
+      setAppState("normal");
+      setView("processOrderConfirmation");
+    }, 10000); // 10 seconds
+  };
+
   const renderView = () => {
     // Handle global app states first
     if (appState === "loading_proposals") {
@@ -188,6 +196,7 @@ const App = () => {
             setView={setView}
             customer={customer}
             order={DUMMY_DATA.currentOrder}
+            handleProcessOrder={handleProcessOrder}
           />
         );
       case "processOrderConfirmation":

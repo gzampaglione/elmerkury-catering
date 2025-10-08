@@ -11,14 +11,32 @@ import {
   Button,
   Typography,
 } from "@mui/material";
-import { ExpandMore, Edit, Block, Update } from "@mui/icons-material";
-import BackButton from "../components/BackButton";
+import {
+  ExpandMore,
+  Edit,
+  Block,
+  Update,
+  ArrowBack,
+} from "@mui/icons-material";
 
 const EditOrderScreen = ({ setView, order: initialOrder, customer }) => {
-  const [order] = useState(initialOrder); // Removed unused setOrder
+  const [order] = useState(initialOrder);
+
   return (
     <>
-      <BackButton onClick={() => setView("editOrderSelect")}>Cancel</BackButton>
+      <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1.5 }}>
+        <Button
+          startIcon={<ArrowBack />}
+          onClick={() => setView("searchOrders")}
+          sx={{ color: "text.secondary" }}
+        >
+          Back to Recent Orders
+        </Button>
+        <Button onClick={() => setView("homepage")} color="error">
+          Cancel
+        </Button>
+      </Box>
+
       <Typography variant="h6">Edit Order #{order.orderNum}</Typography>
       <Alert severity="warning" sx={{ my: 2 }}>
         This order is already in all systems. Changes will create updates.
