@@ -12,7 +12,7 @@ export const ProcessingOrderState = ({ progress }) => (
       Processing Order #12345678...
     </Typography>
     <LinearProgress variant="determinate" value={progress} sx={{ my: 2 }} />
-    <Typography variant="body2">✅ Creating QBO invoice...</Typography>
+    <Typography variant="body2">✅ Creating HTML invoice...</Typography>
     <Typography
       variant="body2"
       color={progress > 50 ? "inherit" : "text.secondary"}

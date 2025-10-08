@@ -29,6 +29,10 @@ const ProcessOrderStep1 = ({ setView, customer, order, setShowHelpTip }) => {
     included: order.utensils.included,
     count: order.utensils.count,
   });
+  const [customerPhone, setCustomerPhone] = useState(
+    customer.contactPhone || ""
+  );
+  const [deliveryContactPhone, setDeliveryContactPhone] = useState("");
   const conflict = deliveryTime === "12:30";
 
   useEffect(() => {
@@ -41,6 +45,33 @@ const ProcessOrderStep1 = ({ setView, customer, order, setShowHelpTip }) => {
     // Cleanup on component unmount
     return () => setShowHelpTip(false);
   }, [customer, setShowHelpTip]);
+
+  const formatPhoneNumber = (value) => {
+    // Remove all non-digits
+    const phoneNumber = value.replace(/\D/g, "");
+
+    // Format as (XXX) XXX-XXXX
+    if (phoneNumber.length <= 3) {
+      return phoneNumber;
+    } else if (phoneNumber.length <= 6) {
+      return `(${phoneNumber.slice(0, 3)}) ${phoneNumber.slice(3)}`;
+    } else {
+      return `(${phoneNumber.slice(0, 3)}) ${phoneNumber.slice(
+        3,
+        6
+      )}-${phoneNumber.slice(6, 10)}`;
+    }
+  };
+
+  const handleCustomerPhoneChange = (e) => {
+    const formatted = formatPhoneNumber(e.target.value);
+    setCustomerPhone(formatted);
+  };
+
+  const handleDeliveryPhoneChange = (e) => {
+    const formatted = formatPhoneNumber(e.target.value);
+    setDeliveryContactPhone(formatted);
+  };
 
   const handleUtensilsChange = (event) => {
     setUtensils({ ...utensils, included: event.target.checked });
@@ -81,10 +112,12 @@ const ProcessOrderStep1 = ({ setView, customer, order, setShowHelpTip }) => {
       <TextField
         fullWidth
         label="Customer Phone"
-        defaultValue={customer.contactPhone}
+        value={customerPhone}
+        onChange={handleCustomerPhoneChange}
         margin="dense"
         size="small"
         type="tel"
+        placeholder="(215) 555-1234"
       />
       <Select fullWidth defaultValue={customer.name} size="small">
         <MenuItem value="Penn Law">Penn Law</MenuItem>
@@ -151,9 +184,12 @@ const ProcessOrderStep1 = ({ setView, customer, order, setShowHelpTip }) => {
           <TextField
             fullWidth
             label="Delivery Contact Phone"
+            value={deliveryContactPhone}
+            onChange={handleDeliveryPhoneChange}
             margin="dense"
             size="small"
             type="tel"
+            placeholder="(215) 555-1234"
           />
         </Box>
       </Tooltip>

@@ -13,7 +13,6 @@ import { CheckCircle, Satellite } from "@mui/icons-material";
 import BackButton from "../BackButton";
 import MannCenterForm from "./MannCenterForm";
 import MarketingEventForm from "./MarketingEventForm";
-import FarmersMarketForm from "./FarmersMarketForm";
 import ChurroBikeForm from "./ChurroBikeForm";
 import OrderSummary from "./OrderSummary";
 
@@ -25,6 +24,7 @@ const SatelliteOrderPage = ({ setView, handleProcessOrder, customer }) => {
     bonusEnabled: false,
     bonusType: "fixed",
     bonusAmount: 50,
+    churroHours: 3,
   });
 
   const handleTypeChange = (newType) => {
@@ -35,6 +35,7 @@ const SatelliteOrderPage = ({ setView, handleProcessOrder, customer }) => {
       bonusEnabled: false,
       bonusType: "fixed",
       bonusAmount: 50,
+      churroHours: 3,
     });
   };
 
@@ -72,7 +73,6 @@ const SatelliteOrderPage = ({ setView, handleProcessOrder, customer }) => {
         >
           <MenuItem value="Mann Center">🎵 Mann Center (Concert VIP)</MenuItem>
           <MenuItem value="Marketing Event">📣 Marketing Event</MenuItem>
-          <MenuItem value="Farmer's Market">🌾 Farmer's Market</MenuItem>
           <MenuItem value="Churro Bike">🚲 Churro Bike (Mobile Event)</MenuItem>
         </Select>
       </FormControl>
@@ -82,9 +82,6 @@ const SatelliteOrderPage = ({ setView, handleProcessOrder, customer }) => {
       )}
       {satelliteType === "Marketing Event" && (
         <MarketingEventForm orderData={orderData} setOrderData={setOrderData} />
-      )}
-      {satelliteType === "Farmer's Market" && (
-        <FarmersMarketForm orderData={orderData} setOrderData={setOrderData} />
       )}
       {satelliteType === "Churro Bike" && (
         <ChurroBikeForm

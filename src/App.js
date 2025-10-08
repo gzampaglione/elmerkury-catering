@@ -127,7 +127,7 @@ const App = () => {
     setTimeout(() => {
       setAppState("normal");
       setView("processOrderConfirmation");
-    }, 8000);
+    }, 3000);
   };
 
   const renderView = () => {

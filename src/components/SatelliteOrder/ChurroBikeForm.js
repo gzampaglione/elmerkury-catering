@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Card,
   TextField,
@@ -6,8 +6,6 @@ import {
   Typography,
   FormControlLabel,
   Checkbox,
-  Divider,
-  Box,
 } from "@mui/material";
 import SectionHeader from "../SectionHeader";
 import StaffSelector from "./StaffSelector";
@@ -30,6 +28,11 @@ const ChurroBikeForm = ({ orderData, setOrderData, customer }) => {
   const [hours, setHours] = useState(3);
   const [attendees, setAttendees] = useState(150);
   const [preMake, setPreMake] = useState(false);
+
+  // Update orderData with hours whenever hours change
+  useEffect(() => {
+    setOrderData((prev) => ({ ...prev, churroHours: hours }));
+  }, [hours, setOrderData]);
 
   return (
     <>
@@ -197,9 +200,6 @@ const ChurroBikeForm = ({ orderData, setOrderData, customer }) => {
         showBonus={false}
         defaultHours={hours}
       />
-
-      {/* Store hours in orderData for calculations */}
-      {setOrderData({ ...orderData, churroHours: hours })}
     </>
   );
 };

@@ -753,6 +753,10 @@ export const API_HELPERS = {
     });
   },
 
+  // ==========================================================================
+  // WEBSITE ORDER QUEUE
+  // ==========================================================================
+
   websiteOrderQueue: [
     {
       orderNum: "12345681",
@@ -780,6 +784,33 @@ export const API_HELPERS = {
       itemsSummary: "3x Pepian Chicken, Rice",
       status: "auto_processed",
       processedDate: "2025-10-08 09:16",
+    },
+    {
+      orderNum: "12345683",
+      customerName: "Temple University",
+      contactEmail: "catering@temple.edu",
+      orderDate: "2025-10-08 11:22",
+      deliveryDate: "2025-10-13",
+      deliveryTime: "1:00 PM",
+      total: 156.0,
+      paymentStatus: "PAID",
+      paymentMethod: "Stripe",
+      itemsSummary: "1x Taco Bar, Chips, 2x Horchata",
+      status: "pending_review",
+    },
+    {
+      orderNum: "12345684",
+      customerName: "Jefferson Health",
+      contactEmail: "events@jefferson.edu",
+      orderDate: "2025-10-07 16:45",
+      deliveryDate: "2025-10-11",
+      deliveryTime: "12:00 PM",
+      total: 680.5,
+      paymentStatus: "PAID",
+      paymentMethod: "Stripe",
+      itemsSummary: "4x Pepian Chicken, 3x Black Bean Rice, Plantains",
+      status: "auto_processed",
+      processedDate: "2025-10-07 16:47",
     },
   ],
 };

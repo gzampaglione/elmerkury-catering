@@ -58,6 +58,35 @@ const ProcessOrderStep3 = ({
     <>
       <BackButton onClick={() => setView("processOrderStep2")}>Back</BackButton>
       <Typography variant="h6">Step 3 of 3: Final Review</Typography>
+
+      <Alert severity="info" sx={{ my: 2 }}>
+        <Typography variant="caption" fontWeight="bold">
+          📄 Processing will:
+        </Typography>
+        <Typography variant="caption" display="block">
+          ✓ Generate HTML invoice (PDF)
+        </Typography>
+        <Typography variant="caption" display="block">
+          ✓ Send to Toast KDS
+        </Typography>
+        <Typography variant="caption" display="block">
+          ✓ Create HubSpot deal (with invoice PDF)
+        </Typography>
+        <Typography variant="caption" display="block">
+          ✓ Record in QuickBooks
+        </Typography>
+        {customer.flags?.requiresPO && (
+          <Typography
+            variant="caption"
+            display="block"
+            color="warning.main"
+            sx={{ mt: 0.5 }}
+          >
+            ⚠️ Preliminary invoice only - awaiting PO
+          </Typography>
+        )}
+      </Alert>
+
       <SectionHeader>
         <Box
           sx={{
