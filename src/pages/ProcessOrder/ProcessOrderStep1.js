@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Alert,
   Box,
@@ -15,9 +15,20 @@ import { AccessTime, CalendarMonth, Info } from "@mui/icons-material";
 import BackButton from "../../components/BackButton";
 import SectionHeader from "../../components/SectionHeader";
 
-const ProcessOrderStep1 = ({ setView, customer, order }) => {
+const ProcessOrderStep1 = ({ setView, customer, order, setShowHelpTip }) => {
   const [deliveryTime, setDeliveryTime] = useState("12:30");
   const conflict = deliveryTime === "12:30";
+
+  useEffect(() => {
+    // Show help tip for Penn customers
+    if (customer.name === "Penn Law") {
+      setShowHelpTip(true);
+    } else {
+      setShowHelpTip(false);
+    }
+    // Cleanup on component unmount
+    return () => setShowHelpTip(false);
+  }, [customer, setShowHelpTip]);
 
   return (
     <>

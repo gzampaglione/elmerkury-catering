@@ -8,7 +8,7 @@ import {
   Button,
   Card,
   CardContent,
-} from "@mui/material"; // Added Card and CardContent
+} from "@mui/material";
 import MainLayout from "./components/MainLayout";
 import Homepage from "./pages/Homepage";
 import ProcessOrderStep1 from "./pages/ProcessOrder/ProcessOrderStep1";
@@ -22,7 +22,12 @@ import SettingsPage from "./pages/SettingsPage";
 import CalendarView from "./pages/CalendarView";
 import { DUMMY_DATA } from "./data/dummyData";
 import { theme } from "./theme";
-import { CheckCircle, Email as EmailIcon } from "@mui/icons-material"; // Renamed Email to EmailIcon to avoid conflict
+import { CheckCircle, Email as EmailIcon } from "@mui/icons-material";
+import {
+  LoadingState,
+  ErrorState,
+  HelpTip,
+} from "./components/states/AppStates";
 
 const EmailDraft = ({ to, subject, body }) => (
   <Card variant="outlined">
@@ -46,8 +51,11 @@ const DefaultEmail = ({ customer }) => (
     <Divider sx={{ my: 2 }} />
     <Typography>Hi Sofia,</Typography>
     <Typography paragraph>
-      We'd like to place a catering order for a faculty lunch. We have a budget
-      of **$500** and are expecting **30 people**.
+      We'd like to place a catering order for a faculty lunch. For items, we
+      were thinking of the following:
+      <br />- 3 Large Chicken Bowls
+      <br />- 2 Small Cheesy Rice (one vegan if possible)
+      <br />- 1 order of Plantain Chips
     </Typography>
     <Typography>Thanks,</Typography>
     <Typography>{customer.contactName}</Typography>
@@ -97,6 +105,8 @@ const App = () => {
     },
   ]);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [appState, setAppState] = useState("normal"); // 'normal', 'loading', 'error_connection', 'error_validation'
+  const [showHelpTip, setShowHelpTip] = useState(false);
 
   const openEmailDraft = (type) => {
     let subject, body;
@@ -118,6 +128,27 @@ const App = () => {
   };
 
   const renderView = () => {
+    // Handle global app states first
+    if (appState.startsWith("loading")) {
+      return (
+        <LoadingState
+          type={appState.split("_")[1]}
+          message="Generating Proposals..."
+          progress={40}
+        />
+      );
+    }
+    if (appState.startsWith("error")) {
+      return (
+        <ErrorState
+          type={appState.split("_")[1]}
+          onRetry={() => setAppState("normal")}
+          onContinue={() => setAppState("normal")}
+        />
+      );
+    }
+
+    // Normal view rendering
     switch (view) {
       case "homepage":
         return (
@@ -133,6 +164,7 @@ const App = () => {
             setView={setView}
             customer={customer}
             order={DUMMY_DATA.currentOrder}
+            setShowHelpTip={setShowHelpTip}
           />
         );
       case "processOrderStep2":
@@ -160,7 +192,13 @@ const App = () => {
           />
         );
       case "generateProposalStep1":
-        return <GenerateProposalStep1 setView={setView} customer={customer} />;
+        return (
+          <GenerateProposalStep1
+            setView={setView}
+            customer={customer}
+            setAppState={setAppState}
+          />
+        );
       case "generateProposalStep2":
         return (
           <GenerateProposalStep2
@@ -169,8 +207,6 @@ const App = () => {
             openEmail={() => openEmailDraft("proposal")}
           />
         );
-      case "editOrderSelect":
-        return <SearchOrders setView={setView} orders={DUMMY_DATA.allOrders} />;
       case "editOrderScreen":
         return (
           <EditOrderScreen
@@ -180,7 +216,7 @@ const App = () => {
           />
         );
       case "settingsPage":
-        return <SettingsPage setView={setView} />;
+        return <SettingsPage setView={setView} setAppState={setAppState} />;
       case "calendarView":
         return (
           <CalendarView setView={setView} events={DUMMY_DATA.calendarEvents} />
@@ -200,6 +236,7 @@ const App = () => {
     setCustomer(newCustomer);
     setEmailContent(<DefaultEmail customer={newCustomer} />);
     setView("homepage");
+    setShowHelpTip(false);
   };
 
   return (
@@ -212,6 +249,7 @@ const App = () => {
         setNotifications={setNotifications}
         handleCustomerToggle={handleCustomerToggle}
       >
+        {showHelpTip && <HelpTip onDismiss={() => setShowHelpTip(false)} />}
         {renderView()}
       </MainLayout>
     </ThemeProvider>

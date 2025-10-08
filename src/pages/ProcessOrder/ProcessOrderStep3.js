@@ -1,6 +1,7 @@
 import React from "react";
 import {
   Alert,
+  Box,
   Paper,
   Grid,
   Divider,
@@ -34,11 +35,24 @@ const ProcessOrderStep3 = ({ setView, order, customer }) => {
     <>
       <BackButton onClick={() => setView("processOrderStep2")}>Back</BackButton>
       <Typography variant="h6">Step 3 of 3: Final Review</Typography>
+      <SectionHeader>Delivery Information</SectionHeader>
+      <Paper variant="outlined" sx={{ p: 2 }}>
+        <Typography fontWeight="bold">{customer.contactName}</Typography>
+        <Typography variant="body2">
+          {customer.address.line1}, {customer.address.line2}
+        </Typography>
+        <Typography variant="body2">
+          {customer.address.city}, {customer.address.state}{" "}
+          {customer.address.zip}
+        </Typography>
+        <Divider sx={{ my: 1 }} />
+        <Typography variant="body2" fontWeight="bold">
+          📅 May 20, 2025 at 12:30 PM
+        </Typography>
+      </Paper>
+      <SectionHeader>Order Summary</SectionHeader>
       <Paper variant="outlined" sx={{ p: 2, my: 2 }}>
         <Grid container spacing={1}>
-          <Grid item xs={12}>
-            <Typography variant="h6">Order Summary</Typography>
-          </Grid>
           {order.items.map((i) => (
             <React.Fragment key={i.id}>
               <Grid item xs={8}>

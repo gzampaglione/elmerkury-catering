@@ -9,6 +9,7 @@ import {
   List,
   ListItem,
   ListItemText,
+  ListItemButton,
 } from "@mui/material";
 import BackButton from "../components/BackButton";
 import SectionHeader from "../components/SectionHeader";
@@ -65,6 +66,7 @@ const CalendarView = ({ setView, events }) => {
             xs={1}
             key={`empty-${i}`}
             sx={{
+              height: 40,
               borderRight: "1px solid #ccc",
               borderBottom: "1px solid #ccc",
               bgcolor: "grey.100",
@@ -102,14 +104,17 @@ const CalendarView = ({ setView, events }) => {
       <SectionHeader>Upcoming Orders</SectionHeader>
       <List>
         {events.map((event) => (
-          <ListItem key={event.date}>
+          <ListItemButton
+            key={event.date}
+            onClick={() => setView("editOrderScreen")}
+          >
             <ListItemText
               primary={`${new Date(event.date).toDateString()}: ${
                 event.customer
               }`}
               secondary={`${event.time} - $${event.total}`}
             />
-          </ListItem>
+          </ListItemButton>
         ))}
       </List>
     </>
