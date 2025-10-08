@@ -4,9 +4,9 @@ import {
   Card,
   CardContent,
   Divider,
-  Button,
   Tooltip,
   IconButton,
+  Badge,
 } from "@mui/material";
 import Header from "./Header";
 import { Notifications } from "@mui/icons-material";
@@ -16,7 +16,7 @@ const AppContainer = ({ children }) => (
   <Box
     sx={{
       p: 1,
-      maxWidth: 380,
+      maxWidth: 400,
       width: "100%",
       bgcolor: "#f8f9fa",
       display: "flex",
@@ -26,6 +26,7 @@ const AppContainer = ({ children }) => (
     {children}
   </Box>
 );
+
 const EmailPane = ({ content }) => (
   <Box
     sx={{
@@ -33,6 +34,7 @@ const EmailPane = ({ content }) => (
       p: 3,
       bgcolor: "white",
       borderRight: "1px solid #e0e0e0",
+      overflowY: "auto",
     }}
   >
     {content}
@@ -46,7 +48,7 @@ const MainLayout = ({
   setShowNotifications,
   notifications,
   setNotifications,
-  handleCustomerToggle,
+  setView,
 }) => (
   <Box sx={{ display: "flex", height: "100vh", bgcolor: "grey.100" }}>
     <EmailPane content={emailContent} />
@@ -65,29 +67,24 @@ const MainLayout = ({
             <IconButton
               onClick={() => setShowNotifications(!showNotifications)}
             >
-              <Notifications />
+              <Badge badgeContent={notifications.length} color="error">
+                <Notifications />
+              </Badge>
             </IconButton>
           </Tooltip>
           {showNotifications && (
             <NotificationsOverlay
               notifications={notifications}
               setNotifications={setNotifications}
+              setView={setView}
             />
           )}
         </Box>
         <Divider sx={{ mb: 2 }} />
-        <CardContent sx={{ flexGrow: 1, overflowY: "auto" }}>
+        <CardContent sx={{ flexGrow: 1, overflowY: "auto", pt: 0 }}>
           {children}
         </CardContent>
       </Card>
-      <Button
-        size="small"
-        fullWidth
-        onClick={handleCustomerToggle}
-        sx={{ mt: 2, textTransform: "uppercase", color: "text.secondary" }}
-      >
-        Toggle Customer Context
-      </Button>
     </AppContainer>
   </Box>
 );

@@ -9,38 +9,103 @@ import {
   TableCell,
   TableRow,
   Tooltip,
+  Box,
+  Chip,
 } from "@mui/material";
 import { ExpandMore } from "@mui/icons-material";
 
 const Step2_Profitability = ({ item }) => {
   const lineTotal = item.qty * item.unitPrice;
-  const estLaborCost = item.qty * item.estLaborHours * 25;
-  const estFoodCost = item.qty * item.estFoodCost;
-  const grossMargin = lineTotal - estFoodCost - estLaborCost;
+
+  if (!item.marginEdge) {
+    return null;
+  }
+
+  const totalFoodCost = item.marginEdge.foodCost * item.qty;
+  const totalLaborCost = item.marginEdge.laborCost * item.qty;
+  const grossMargin = lineTotal - totalFoodCost - totalLaborCost;
+  const grossMarginPercent = (grossMargin / lineTotal) * 100;
 
   return (
     <Accordion sx={{ mt: 1, boxShadow: "none", bgcolor: "grey.50" }}>
       <AccordionSummary expandIcon={<ExpandMore />}>
-        <Typography variant="caption">Profitability</Typography>
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            width: "100%",
+            pr: 2,
+          }}
+        >
+          <Typography variant="caption">Detailed Profitability</Typography>
+          <Chip
+            label={`${grossMarginPercent.toFixed(1)}% margin`}
+            size="small"
+            color={
+              grossMarginPercent > 60
+                ? "success"
+                : grossMarginPercent > 40
+                ? "warning"
+                : "error"
+            }
+          />
+        </Box>
       </AccordionSummary>
       <AccordionDetails>
         <Table size="small">
           <TableBody>
             <TableRow>
-              <TableCell>Est Food Cost:</TableCell>
+              <TableCell>Revenue:</TableCell>
               <TableCell align="right">
-                ${estFoodCost.toFixed(2)} ({item.ingredients.join(", ")})
+                <Typography fontWeight="bold">
+                  ${lineTotal.toFixed(2)}
+                </Typography>
               </TableCell>
             </TableRow>
             <TableRow>
-              <TableCell>Est Labor Cost:</TableCell>
-              <TableCell align="right">
-                ${estLaborCost.toFixed(2)} ({item.estLaborHours} hrs)
+              <TableCell colSpan={2}>
+                <Typography variant="caption" fontWeight="bold">
+                  Costs (MarginEdge):
+                </Typography>
               </TableCell>
             </TableRow>
+            {item.marginEdge.ingredients?.map((ing, idx) => (
+              <TableRow key={idx}>
+                <TableCell sx={{ pl: 3 }}>
+                  <Typography variant="caption">
+                    • {ing.name} ({ing.qty}){!ing.inStock && " ⚠️"}
+                  </Typography>
+                </TableCell>
+                <TableCell align="right">
+                  <Typography variant="caption">
+                    ${(ing.cost * item.qty).toFixed(2)}
+                  </Typography>
+                </TableCell>
+              </TableRow>
+            ))}
             <TableRow>
               <TableCell>
-                <Tooltip title="Line Total - Food & Labor">
+                <Typography variant="caption" fontWeight="bold">
+                  Total Food Cost:
+                </Typography>
+              </TableCell>
+              <TableCell align="right">
+                <Typography variant="caption" fontWeight="bold">
+                  ${totalFoodCost.toFixed(2)} (
+                  {item.marginEdge.foodCostPercent.toFixed(1)}%)
+                </Typography>
+              </TableCell>
+            </TableRow>
+            <TableRow>
+              <TableCell>Labor Cost:</TableCell>
+              <TableCell align="right">
+                ${totalLaborCost.toFixed(2)} (
+                {item.marginEdge.laborHours * item.qty} hrs)
+              </TableCell>
+            </TableRow>
+            <TableRow sx={{ bgcolor: "success.50" }}>
+              <TableCell>
+                <Tooltip title="Revenue - Food Cost - Labor Cost">
                   <Typography variant="caption" fontWeight="bold">
                     Gross Margin:
                   </Typography>
@@ -52,7 +117,7 @@ const Step2_Profitability = ({ item }) => {
                   fontWeight="bold"
                   color="success.main"
                 >
-                  ${grossMargin.toFixed(2)}
+                  ${grossMargin.toFixed(2)} ({grossMarginPercent.toFixed(1)}%)
                 </Typography>
               </TableCell>
             </TableRow>
