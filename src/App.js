@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Alert,
   Box,
@@ -22,6 +22,12 @@ import {
   CircularProgress,
   RadioGroup,
   Radio,
+  Tooltip,
+  IconButton,
+  Grid,
+  Paper,
+  Tabs,
+  Tab,
 } from "@mui/material";
 import {
   Apartment,
@@ -51,36 +57,26 @@ import {
   Update,
   Warning,
   AccessTime,
+  Today,
+  ViewList,
+  ViewModule,
 } from "@mui/icons-material";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 
 // --- THEME to match Google's Material Design aesthetic ---
 const theme = createTheme({
   palette: {
-    primary: {
-      main: "#1976d2", // Google Blue
-    },
-    success: {
-      main: "#34a853", // Google Green
-    },
-    warning: {
-      main: "#fbbc05", // Google Yellow
-    },
-    error: {
-      main: "#ea4335", // Google Red
-    },
+    primary: { main: "#1976d2" },
+    success: { main: "#34a853" },
+    warning: { main: "#fbbc05" },
+    error: { main: "#ea4335" },
+    info: { main: "#4285F4" },
+    grey: { 50: "#f8f9fa", 100: "#f1f3f4" },
   },
-  typography: {
-    fontFamily: "Roboto, sans-serif",
-  },
+  typography: { fontFamily: "Roboto, sans-serif" },
   components: {
     MuiButton: {
-      styleOverrides: {
-        root: {
-          textTransform: "none",
-          borderRadius: "4px",
-        },
-      },
+      styleOverrides: { root: { textTransform: "none", borderRadius: "4px" } },
     },
     MuiCard: {
       styleOverrides: {
@@ -94,7 +90,7 @@ const theme = createTheme({
   },
 });
 
-// --- DUMMY DATA based on the wireframe document ---
+// --- DUMMY DATA ---
 const DUMMY_DATA = {
   knownCustomer: {
     name: "Penn Law",
@@ -123,28 +119,34 @@ const DUMMY_DATA = {
     orderNum: "12345678",
     items: [
       {
+        id: 1,
         emailDesc: "Large Chicken Bowl",
         matchedItem: "Chicken Bowl (L)",
         confidence: "High",
         qty: 3,
         unitPrice: 12.0,
         notes: "Extra cilantro, no onions",
+        foodCost: 4.5,
       },
       {
+        id: 2,
         emailDesc: "Small Cheesy Rice",
         matchedItem: "Cheesy Rice (S)",
         confidence: "High",
         qty: 2,
         unitPrice: 8.0,
         notes: "Vegan option",
+        foodCost: 2.4,
       },
       {
+        id: 3,
         emailDesc: "Plantain chips",
         matchedItem: "Plantain Chips",
         confidence: "High",
         qty: 1,
         unitPrice: 10.0,
         notes: "",
+        foodCost: 3.2,
       },
     ],
     deliveryFee: 25.0,
@@ -152,58 +154,154 @@ const DUMMY_DATA = {
   },
   proposals: [
     {
+      id: 1,
       title: "Traditional Guatemalan Feast",
       ingredientsOnHand: true,
       successRate: 87,
       similarTo: "Penn Law 4/15",
       items: [
-        { name: "Large Pepian Chicken", price: 85 },
-        { name: "2× Black Bean Rice", price: 32 },
+        { id: 1, name: "Pepian Chicken (L)", qty: 2, price: 85, cost: 37.5 },
+        { id: 2, name: "Black Bean Rice (L)", qty: 2, price: 32, cost: 12.0 },
       ],
-      total: 247,
+      margin: 68,
+      status: "BEST",
     },
     {
-      title: "Build-Your-Own Bowl Bar",
-      ingredientsOnHand: false,
-      needs: "cilantro",
+      id: 2,
+      title: "Hearty Taco Bar",
+      ingredientsOnHand: true,
       successRate: 92,
-      total: 450,
+      similarTo: "SIG 3/12",
+      items: [
+        { id: 1, name: "Carne Asada (per lb)", qty: 5, price: 25, cost: 11.0 },
+        { id: 2, name: "Corn Tortillas (50)", qty: 1, price: 20, cost: 5.0 },
+      ],
+      margin: 62,
+      status: "GOOD",
+    },
+    {
+      id: 3,
+      title: "Vegetarian Celebration",
+      ingredientsOnHand: false,
+      needs: "squash",
+      successRate: 85,
+      items: [
+        {
+          id: 1,
+          name: "Stuffed Chile Rellenos (12)",
+          qty: 2,
+          price: 60,
+          cost: 20.0,
+        },
+        { id: 2, name: "Elote Loco Tray", qty: 1, price: 45, cost: 15.0 },
+      ],
+      margin: 71,
+      status: "HIGH MARGIN",
     },
   ],
   recentOrders: [
     {
       id: "#12345",
       customer: "Penn Law",
-      date: "May 20",
+      date: "Oct 07",
       status: "Confirmed",
       total: 97.0,
     },
     {
       id: "#12344",
       customer: "SIG",
-      date: "May 18",
+      date: "Oct 05",
       status: "Delivered",
       total: 325.0,
     },
     {
       id: "#12343",
       customer: "Wharton",
-      date: "May 15",
+      date: "Oct 03",
       status: "Delivered",
       total: 850.0,
+    },
+    {
+      id: "#12342",
+      customer: "Comcast",
+      date: "Oct 02",
+      status: "Delivered",
+      total: 1200.0,
+    },
+    {
+      id: "#12341",
+      customer: "Penn Law",
+      date: "Sep 28",
+      status: "Paid",
+      total: 450.0,
+    },
+    {
+      id: "#12340",
+      customer: "Morgan Lewis",
+      date: "Sep 25",
+      status: "Paid",
+      total: 680.0,
+    },
+    {
+      id: "#12339",
+      customer: "SIG",
+      date: "Sep 22",
+      status: "Paid",
+      total: 250.0,
+    },
+    {
+      id: "#12338",
+      customer: "GoPuff",
+      date: "Sep 19",
+      status: "Paid",
+      total: 950.0,
+    },
+    {
+      id: "#12337",
+      customer: "Penn Law",
+      date: "Sep 15",
+      status: "Paid",
+      total: 720.0,
+    },
+    {
+      id: "#12336",
+      customer: "CHOP",
+      date: "Sep 12",
+      status: "Paid",
+      total: 480.0,
+    },
+  ],
+  calendarEvents: [
+    {
+      date: "2025-10-09",
+      customer: "SIG",
+      time: "11:00 AM",
+      total: 325,
+      status: "Confirmed",
+    },
+    {
+      date: "2025-10-10",
+      customer: "Wharton Poker Club",
+      time: "7:00 PM",
+      total: 820,
+      status: "Confirmed",
+    },
+    {
+      date: "2025-10-14",
+      customer: "Penn Law",
+      time: "12:30 PM",
+      total: 450,
+      status: "Confirmed",
     },
   ],
 };
 
 // --- HELPER & LAYOUT COMPONENTS ---
 const AppContainer = ({ children }) => (
-  <Box sx={{ p: 1, maxWidth: 380, margin: "auto", bgcolor: "#f8f9fa" }}>
-    <Card sx={{ boxShadow: "none" }}>
-      <CardContent>{children}</CardContent>
-    </Card>
+  <Box sx={{ p: 1, maxWidth: 380, width: "100%", bgcolor: "#f8f9fa" }}>
+    {children}
   </Box>
 );
-
 const Header = () => (
   <Box sx={{ display: "flex", alignItems: "center", mb: 2, p: 1 }}>
     <img
@@ -216,17 +314,16 @@ const Header = () => (
     </Typography>
   </Box>
 );
-
-const SectionHeader = ({ children }) => (
+const SectionHeader = ({ children, ...props }) => (
   <Typography
     variant="overline"
     color="text.secondary"
-    sx={{ display: "block", mt: 2.5, mb: 1 }}
+    sx={{ display: "flex", alignItems: "center", mt: 2.5, mb: 1 }}
+    {...props}
   >
     {children}
   </Typography>
 );
-
 const BackButton = ({ onClick, children }) => (
   <Button
     startIcon={<ArrowBack />}
@@ -305,7 +402,7 @@ const Homepage = ({ setView, customer, recentOrders }) => (
     </Button>
     <SectionHeader>Recent Orders</SectionHeader>
     <List dense>
-      {recentOrders.map((order) => (
+      {recentOrders.slice(0, 10).map((order) => (
         <ListItem key={order.id} disablePadding>
           <ListItemText
             primary={`• ${order.customer} - ${order.date} (${order.id})`}
@@ -314,6 +411,13 @@ const Homepage = ({ setView, customer, recentOrders }) => (
       ))}
     </List>
     <Box sx={{ display: "flex", justifyContent: "space-between", mt: 2 }}>
+      <Button
+        size="small"
+        startIcon={<Today />}
+        onClick={() => setView("calendarView")}
+      >
+        Calendar
+      </Button>
       <Button
         size="small"
         startIcon={<Search />}
@@ -332,224 +436,254 @@ const Homepage = ({ setView, customer, recentOrders }) => (
   </>
 );
 
-const ProcessOrderStep1 = ({ setView, customer, order }) => (
-  <>
-    <BackButton onClick={() => setView("homepage")}>Back to Home</BackButton>
-    <Typography variant="h6">Step 1 of 3: Customer & Delivery</Typography>
-    <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-      📋 Order #: {order.orderNum}
-    </Typography>
-    <SectionHeader>Customer Information</SectionHeader>
-    <TextField
-      fullWidth
-      label="Customer Name"
-      defaultValue={customer.contactName}
-      margin="dense"
-      size="small"
-    />
-    <TextField
-      fullWidth
-      label="Company/Client"
-      defaultValue={customer.name}
-      margin="dense"
-      size="small"
-      InputProps={{ endAdornment: <Apartment /> }}
-    />
-    {customer.flags.taxExempt && (
-      <Alert
-        severity="warning"
-        icon={<Warning fontSize="inherit" />}
-        sx={{ mt: 1 }}
-      >
-        Tax Exempt | Requires PO
-      </Alert>
-    )}
-    <TextField
-      fullWidth
-      label="Email"
-      defaultValue={customer.contactEmail}
-      margin="dense"
-      size="small"
-    />
-    <TextField
-      fullWidth
-      label="Phone"
-      defaultValue={customer.contactPhone}
-      margin="dense"
-      size="small"
-    />
-    <SectionHeader>Delivery Details</SectionHeader>
-    <TextField
-      fullWidth
-      label="Address Line 1"
-      defaultValue={customer.address.line1}
-      margin="dense"
-      size="small"
-    />
-    <TextField
-      fullWidth
-      label="Address Line 2"
-      defaultValue={customer.address.line2}
-      margin="dense"
-      size="small"
-    />
-    <Box sx={{ display: "flex", gap: 1 }}>
-      <TextField
-        label="State"
-        defaultValue={customer.address.state}
-        margin="dense"
-        size="small"
-      />
-      <TextField
-        label="ZIP Code"
-        defaultValue={customer.address.zip}
-        margin="dense"
-        size="small"
-      />
-    </Box>
-    <Box sx={{ display: "flex", gap: 1, mt: 1 }}>
-      <TextField
-        fullWidth
-        label="Delivery Date"
-        defaultValue="2025-05-20"
-        size="small"
-        type="date"
-        InputLabelProps={{ shrink: true }}
-        InputProps={{
-          startAdornment: (
-            <CalendarMonth sx={{ mr: 1, color: "text.secondary" }} />
-          ),
-        }}
-      />
-      <TextField
-        fullWidth
-        label="Delivery Time"
-        defaultValue="12:30"
-        size="small"
-        type="time"
-        InputLabelProps={{ shrink: true }}
-        InputProps={{
-          startAdornment: (
-            <AccessTime sx={{ mr: 1, color: "text.secondary" }} />
-          ),
-        }}
-      />
-    </Box>
-    <SectionHeader>Options</SectionHeader>
-    <FormControlLabel control={<Switch />} label="Include Utensils?" />
-    <TextField
-      label="How many sets?"
-      size="small"
-      type="number"
-      margin="dense"
-    />
-    <Divider sx={{ my: 2 }} />
-    <Button
-      fullWidth
-      variant="contained"
-      endIcon={<ArrowForwardIos />}
-      onClick={() => setView("processOrderStep2")}
-    >
-      Next: Review Items
-    </Button>
-  </>
-);
+const ProcessOrderStep1 = ({ setView, customer, order }) => {
+  const [deliveryTime, setDeliveryTime] = useState("12:30");
+  const conflict = deliveryTime === "12:30";
 
-const ProcessOrderStep2 = ({ setView, order }) => {
-  const subtotal = order.items.reduce(
-    (acc, item) => acc + item.qty * item.unitPrice,
+  return (
+    <>
+      <BackButton onClick={() => setView("homepage")}>Back to Home</BackButton>
+      <Typography variant="h6">Step 1 of 3: Customer & Delivery</Typography>
+      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+        📋 Order #: {order.orderNum}
+      </Typography>
+      <SectionHeader>
+        Customer Information{" "}
+        <Tooltip title="Pulled from HubSpot CRM">
+          <Info fontSize="small" sx={{ ml: 1 }} color="disabled" />
+        </Tooltip>
+      </SectionHeader>
+      <TextField
+        fullWidth
+        label="Customer Name"
+        defaultValue={customer.contactName}
+        margin="dense"
+        size="small"
+      />
+      <TextField
+        fullWidth
+        label="Company/Client"
+        defaultValue={customer.name}
+        margin="dense"
+        size="small"
+        InputProps={{ endAdornment: <Apartment /> }}
+      />
+      {customer.name !== "New Customer" && (
+        <Card variant="outlined" sx={{ p: 1, mt: 1, bgcolor: "grey.50" }}>
+          <Typography variant="caption" sx={{ fontWeight: "bold" }}>
+            Order History
+          </Typography>
+          <Typography variant="caption" display="block">
+            {customer.orderCount} orders | Avg. $
+            {Math.round(customer.ytdSpend / customer.orderCount)}
+          </Typography>
+        </Card>
+      )}
+      <SectionHeader>Delivery Details</SectionHeader>
+      <Box sx={{ display: "flex", gap: 1, mt: 1 }}>
+        <TextField
+          fullWidth
+          label="Delivery Date"
+          defaultValue="2025-10-14"
+          size="small"
+          type="date"
+          InputLabelProps={{ shrink: true }}
+          InputProps={{
+            startAdornment: (
+              <CalendarMonth sx={{ mr: 1, color: "text.secondary" }} />
+            ),
+          }}
+        />
+        <TextField
+          fullWidth
+          label="Delivery Time"
+          value={deliveryTime}
+          onChange={(e) => setDeliveryTime(e.target.value)}
+          size="small"
+          type="time"
+          InputLabelProps={{ shrink: true }}
+          InputProps={{
+            startAdornment: (
+              <AccessTime sx={{ mr: 1, color: "text.secondary" }} />
+            ),
+          }}
+        />
+      </Box>
+      <Tooltip title="Pulled from Toast, calculated by system">
+        <Alert severity={conflict ? "error" : "success"} sx={{ mt: 1 }}>
+          {conflict ? "Conflict: SIG Delivery at 12:00 PM" : "No Conflict"}
+        </Alert>
+      </Tooltip>
+      <Divider sx={{ my: 2 }} />
+      <Button
+        fullWidth
+        variant="contained"
+        endIcon={<ArrowForwardIos />}
+        onClick={() => setView("processOrderStep2")}
+      >
+        Next: Review Items
+      </Button>
+    </>
+  );
+};
+
+const ProcessOrderStep2 = ({ setView, order: initialOrder }) => {
+  const [order, setOrder] = useState(initialOrder);
+  const [subtotal, setSubtotal] = useState(0);
+
+  useEffect(() => {
+    const newSubtotal = order.items.reduce(
+      (acc, item) => acc + item.qty * item.unitPrice,
+      0
+    );
+    setSubtotal(newSubtotal);
+  }, [order]);
+
+  const totalFoodCost = order.items.reduce(
+    (acc, item) => acc + item.qty * item.foodCost,
     0
   );
-  const total = subtotal + order.deliveryFee + order.tip;
+  const grossProfit = subtotal - totalFoodCost;
+  const netProfit = grossProfit - parseFloat(order.deliveryFee || 0);
+
   return (
     <>
       <BackButton onClick={() => setView("processOrderStep1")}>Back</BackButton>
       <Typography variant="h6">Step 2 of 3: Items & Pricing</Typography>
-      <Typography variant="body2" color="text.secondary">
-        Order #{order.orderNum} | Penn Law
-      </Typography>
       <Alert severity="info" sx={{ my: 2 }}>
         AI detected {order.items.length} items from email.
       </Alert>
       <SectionHeader>Items Ordered</SectionHeader>
       {order.items.map((item, index) => (
-        <Card key={index} variant="outlined" sx={{ mb: 1.5 }}>
+        <Card key={item.id} variant="outlined" sx={{ mb: 1.5 }}>
           <CardContent>
             <Typography variant="caption" color="text.secondary">
               Email: "{item.emailDesc}"
             </Typography>
-            <Select
-              fullWidth
-              defaultValue={item.matchedItem}
-              size="small"
-              sx={{ mt: 1 }}
-            >
-              <MenuItem value={item.matchedItem}>{item.matchedItem}</MenuItem>
-            </Select>
-            <Typography variant="caption" color="success.main">
-              Confidence: ✅ High
+            <Typography variant="body1" sx={{ fontWeight: 500, mt: 1 }}>
+              {item.qty}× {item.matchedItem}
             </Typography>
-            <Box
-              sx={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                mt: 1,
-              }}
-            >
-              <TextField
-                label="Qty"
-                defaultValue={item.qty}
-                size="small"
-                type="number"
-                sx={{ width: "70px" }}
-              />
-              <Typography>x ${item.unitPrice.toFixed(2)}</Typography>
-              <Typography variant="body1" sx={{ fontWeight: "bold" }}>
-                = ${(item.qty * item.unitPrice).toFixed(2)}
-              </Typography>
-            </Box>
-            <TextField
-              fullWidth
-              label="Flavors/Notes"
-              defaultValue={item.notes}
-              size="small"
-              margin="dense"
-            />
-            <Button
-              fullWidth
-              size="small"
-              startIcon={<Close />}
-              sx={{ mt: 1, color: "text.secondary" }}
-            >
-              Remove Item
-            </Button>
+            <Typography variant="body2">
+              = ${(item.qty * item.unitPrice).toFixed(2)}
+            </Typography>
+            <Divider sx={{ my: 1 }} />
+            <Typography variant="caption" sx={{ fontWeight: "bold" }}>
+              Profitability:
+            </Typography>
+            <Typography variant="caption" display="block">
+              Food Cost: ${(item.qty * item.foodCost).toFixed(2)} (
+              {((item.foodCost / item.unitPrice) * 100).toFixed(1)}%) ✅
+            </Typography>
+            <Typography variant="caption" display="block">
+              Profit: $
+              {(item.qty * item.unitPrice - item.qty * item.foodCost).toFixed(
+                2
+              )}
+            </Typography>
           </CardContent>
         </Card>
       ))}
-      <Button fullWidth startIcon={<Edit />} sx={{ mt: 1 }}>
-        + Add Another Item
-      </Button>
       <SectionHeader>Additional Charges</SectionHeader>
-      <Box sx={{ textAlign: "right" }}>
-        <Typography>Items Subtotal: ${subtotal.toFixed(2)}</Typography>
-        <Typography>Tip: ${order.tip.toFixed(2)}</Typography>
-        <Typography>Delivery Fee: ${order.deliveryFee.toFixed(2)}</Typography>
-        <Typography color="text.secondary">(Penn Law - Tax Exempt)</Typography>
-        <Divider sx={{ my: 1 }} />
-        <Typography variant="h6">TOTAL: ${total.toFixed(2)}</Typography>
-      </Box>
-      <Divider sx={{ my: 2 }} />
-      <Box sx={{ display: "flex", justifyContent: "space-between" }}>
-        <Button onClick={() => setView("processOrderStep1")}>← Back</Button>
-        <Button
-          variant="contained"
-          endIcon={<ArrowForwardIos />}
-          onClick={() => setView("processOrderStep3")}
-        >
-          Next: Final Review
-        </Button>
-      </Box>
+      <TextField
+        label="Tip"
+        value={order.tip}
+        onChange={(e) => setOrder({ ...order, tip: e.target.value })}
+        size="small"
+        margin="dense"
+        type="number"
+      />
+      <TextField
+        label="Delivery Fee"
+        value={order.deliveryFee}
+        onChange={(e) => setOrder({ ...order, deliveryFee: e.target.value })}
+        size="small"
+        margin="dense"
+        type="number"
+      />
+      <Card variant="outlined" sx={{ my: 2, bgcolor: "grey.50" }}>
+        <CardContent>
+          <SectionHeader>Order Profitability</SectionHeader>
+          <Grid container spacing={1}>
+            <Grid item xs={6}>
+              <Typography>Revenue:</Typography>
+            </Grid>
+            <Grid item xs={6} textAlign="right">
+              <Typography>${subtotal.toFixed(2)}</Typography>
+            </Grid>
+            <Grid item xs={6}>
+              <Typography>Food Cost:</Typography>
+            </Grid>
+            <Grid item xs={6} textAlign="right">
+              <Typography>
+                ${totalFoodCost.toFixed(2)} (
+                {((totalFoodCost / subtotal) * 100 || 0).toFixed(1)}%) ✅
+              </Typography>
+            </Grid>
+            <Grid item xs={6}>
+              <Typography sx={{ fontWeight: "bold" }}>Gross Profit:</Typography>
+            </Grid>
+            <Grid item xs={6} textAlign="right">
+              <Typography sx={{ fontWeight: "bold" }}>
+                ${grossProfit.toFixed(2)}
+              </Typography>
+            </Grid>
+            <Grid item xs={12}>
+              <Divider sx={{ my: 1 }} />
+            </Grid>
+            <Grid item xs={6}>
+              <Typography>Delivery:</Typography>
+            </Grid>
+            <Grid item xs={6} textAlign="right">
+              <Typography>
+                - ${parseFloat(order.deliveryFee || 0).toFixed(2)}
+              </Typography>
+            </Grid>
+            <Grid item xs={6}>
+              <Typography
+                sx={{
+                  fontWeight: "bold",
+                  color: netProfit > 0 ? "success.main" : "error.main",
+                }}
+              >
+                Net Profit:
+              </Typography>
+            </Grid>
+            <Grid item xs={6} textAlign="right">
+              <Typography
+                sx={{
+                  fontWeight: "bold",
+                  color: netProfit > 0 ? "success.main" : "error.main",
+                }}
+              >
+                ${netProfit.toFixed(2)}
+              </Typography>
+            </Grid>
+          </Grid>
+          <Alert
+            severity="info"
+            icon={<Info fontSize="inherit" />}
+            sx={{ mt: 2 }}
+          >
+            💡 Suggestion: Add plantains (+$10 revenue, +$2 cost). New profit: $
+            {(netProfit + 8).toFixed(2)}
+          </Alert>
+          <Alert
+            severity="error"
+            icon={<Warning fontSize="inherit" />}
+            sx={{ mt: 1 }}
+          >
+            ⚠️ Inventory Warning: Low chicken stock (2 lbs left)
+          </Alert>
+        </CardContent>
+      </Card>
+      <Button
+        fullWidth
+        variant="contained"
+        endIcon={<ArrowForwardIos />}
+        onClick={() => setView("processOrderStep3")}
+      >
+        Next: Final Review
+      </Button>
     </>
   );
 };
@@ -603,7 +737,7 @@ const ProcessOrderStep3 = ({ setView, order, customer }) => {
       <Divider />
       <List dense>
         {order.items.map((i) => (
-          <ListItem key={i.matchedItem}>
+          <ListItem key={i.id}>
             <ListItemText
               primary={`• ${i.qty}× ${i.matchedItem}`}
               secondary={`$${(i.qty * i.unitPrice).toFixed(2)}`}
@@ -614,27 +748,31 @@ const ProcessOrderStep3 = ({ setView, order, customer }) => {
       <Typography variant="h5" align="right" sx={{ my: 2 }}>
         💰 Total: ${total.toFixed(2)}
       </Typography>
-      <SectionHeader>Penn Special Handling</SectionHeader>
-      <Alert severity="warning">This customer requires a PO</Alert>
-      <RadioGroup row defaultValue="final">
-        <FormControlLabel
-          value="preliminary"
-          control={<Radio />}
-          label="Preliminary (awaiting PO)"
-        />
-        <FormControlLabel
-          value="final"
-          control={<Radio />}
-          label="Final (PO provided)"
-        />
-      </RadioGroup>
-      <TextField
-        fullWidth
-        label="PO Number"
-        defaultValue="PO-2025-456"
-        margin="dense"
-        size="small"
-      />
+      {customer.flags.requiresPO && (
+        <>
+          <SectionHeader>Penn Special Handling</SectionHeader>
+          <Alert severity="warning">This customer requires a PO</Alert>
+          <RadioGroup row defaultValue="final">
+            <FormControlLabel
+              value="preliminary"
+              control={<Radio />}
+              label="Preliminary (awaiting PO)"
+            />
+            <FormControlLabel
+              value="final"
+              control={<Radio />}
+              label="Final (PO provided)"
+            />
+          </RadioGroup>
+          <TextField
+            fullWidth
+            label="PO Number"
+            defaultValue="PO-2025-456"
+            margin="dense"
+            size="small"
+          />
+        </>
+      )}
       <Divider sx={{ my: 2 }} />
       <Button
         fullWidth
@@ -650,7 +788,7 @@ const ProcessOrderStep3 = ({ setView, order, customer }) => {
   );
 };
 
-const ProcessOrderConfirmation = ({ setView, order }) => (
+const ProcessOrderConfirmation = ({ setView, order, openEmail }) => (
   <>
     <Box sx={{ textAlign: "center", my: 2 }}>
       <CheckCircle color="success" sx={{ fontSize: 48 }} />
@@ -690,7 +828,13 @@ const ProcessOrderConfirmation = ({ setView, order }) => (
     <Typography variant="body2">
       Draft created with invoice PDF attached and ready to send.
     </Typography>
-    <Button fullWidth variant="contained" startIcon={<Email />} sx={{ my: 2 }}>
+    <Button
+      fullWidth
+      variant="contained"
+      startIcon={<Email />}
+      sx={{ my: 2 }}
+      onClick={openEmail}
+    >
       Open Email Draft
     </Button>
     <Divider />
@@ -712,6 +856,7 @@ const GenerateProposalStep1 = ({ setView, customer }) => (
       defaultValue="500.00"
       margin="dense"
       size="small"
+      helperText="Recognized by AI from email"
     />
     <TextField
       fullWidth
@@ -719,87 +864,103 @@ const GenerateProposalStep1 = ({ setView, customer }) => (
       defaultValue="30"
       margin="dense"
       size="small"
+      helperText="Recognized by AI from email"
     />
     <Typography variant="caption">Per Person Budget: $16.67</Typography>
-    <SectionHeader>Event Details</SectionHeader>
-    <Select fullWidth defaultValue="lunch" size="small" sx={{ mt: 1 }}>
-      <MenuItem value="lunch">Corporate Lunch</MenuItem>
-    </Select>
-    <FormControlLabel
-      control={<Switch defaultChecked />}
-      label="Vegetarian options"
-    />
-    <TextField
-      fullWidth
-      label="Customer Notes/Preferences"
-      defaultValue="Need options that travel well, prefer not too spicy"
-      multiline
-      rows={3}
-      margin="normal"
-    />
     <Button
       fullWidth
       variant="contained"
       sx={{ mt: 2 }}
       onClick={() => setView("generateProposalStep2")}
     >
-      ✨ Generate 5 Proposals
+      ✨ Generate 3 Proposals
     </Button>
   </>
 );
 
-const GenerateProposalStep2 = ({ setView, proposals }) => (
-  <>
-    <BackButton onClick={() => setView("generateProposalStep1")}>
-      Back
-    </BackButton>
-    <Typography variant="h6">Menu Proposals</Typography>
-    <Alert severity="info" sx={{ my: 2 }}>
-      Generated {proposals.length} proposals based on inventory, past orders,
-      and budget.
-    </Alert>
-    {proposals.map((p, i) => (
-      <Accordion key={i} defaultExpanded={i === 0}>
-        <AccordionSummary expandIcon={<ExpandMore />}>
-          <Typography sx={{ fontWeight: "bold" }}>{p.title}</Typography>
-        </AccordionSummary>
-        <AccordionDetails sx={{ bgcolor: "#fafafa" }}>
-          <Typography
-            variant="body2"
-            color={p.ingredientsOnHand ? "success.main" : "warning.main"}
-          >
-            {p.ingredientsOnHand
-              ? "✅ All ingredients on hand"
-              : `⚠️ Need to order: ${p.needs}`}
-          </Typography>
-          <Typography variant="body2" color="primary.main">
-            ⭐ {p.successRate}% success rate
-          </Typography>
-          <Divider sx={{ my: 1 }} />
-          {p.items?.map((item) => (
-            <Typography key={item.name}>
-              • {item.name} - ${item.price}
-            </Typography>
-          ))}
-          <Typography sx={{ mt: 1, fontWeight: "bold" }}>
-            Total: ${p.total}
-          </Typography>
-          <Button size="small" variant="contained" sx={{ mt: 1 }}>
-            ✓ Select
-          </Button>
-        </AccordionDetails>
-      </Accordion>
-    ))}
-    <Button
-      fullWidth
-      variant="contained"
-      sx={{ mt: 2 }}
-      onClick={() => alert("Email draft created!")}
-    >
-      Continue with Selected →
-    </Button>
-  </>
-);
+const GenerateProposalStep2 = ({ setView, initialProposals, openEmail }) => {
+  const [proposals, setProposals] = useState(
+    JSON.parse(JSON.stringify(initialProposals))
+  ); // Deep copy
+
+  const handleItemChange = (propId, itemId, field, value) => {
+    const updatedProposals = proposals.map((p) => {
+      if (p.id === propId) {
+        const updatedItems = p.items.map((item) =>
+          item.id === itemId ? { ...item, [field]: value } : item
+        );
+        return { ...p, items: updatedItems };
+      }
+      return p;
+    });
+    setProposals(updatedProposals);
+  };
+
+  return (
+    <>
+      <BackButton onClick={() => setView("generateProposalStep1")}>
+        Back
+      </BackButton>
+      <Typography variant="h6">Menu Proposals</Typography>
+      {proposals.map((p, i) => {
+        const total = p.items.reduce(
+          (acc, item) => acc + item.qty * item.price,
+          0
+        );
+        return (
+          <Accordion key={p.id} defaultExpanded={i === 0}>
+            <AccordionSummary expandIcon={<ExpandMore />}>
+              <Typography sx={{ fontWeight: "bold" }}>{p.title}</Typography>
+            </AccordionSummary>
+            <AccordionDetails sx={{ bgcolor: "#fafafa" }}>
+              <Typography variant="body2" color="primary.main">
+                ⭐ Margin: {p.margin}% ({p.status})
+              </Typography>
+              {p.items.map((item) => (
+                <Box
+                  key={item.id}
+                  sx={{ display: "flex", alignItems: "center", gap: 1, my: 1 }}
+                >
+                  <TextField
+                    size="small"
+                    value={item.qty}
+                    onChange={(e) =>
+                      handleItemChange(p.id, item.id, "qty", e.target.value)
+                    }
+                    type="number"
+                    sx={{ width: 70 }}
+                  />
+                  <Typography sx={{ flexGrow: 1 }}>{item.name}</Typography>
+                  <TextField
+                    size="small"
+                    value={item.price}
+                    onChange={(e) =>
+                      handleItemChange(p.id, item.id, "price", e.target.value)
+                    }
+                    type="number"
+                    sx={{ width: 80 }}
+                    InputProps={{ startAdornment: "$" }}
+                  />
+                  <IconButton size="small">
+                    <Edit fontSize="inherit" />
+                  </IconButton>
+                </Box>
+              ))}
+              <Typography
+                sx={{ mt: 1, fontWeight: "bold", textAlign: "right" }}
+              >
+                Total: ${total.toFixed(2)}
+              </Typography>
+            </AccordionDetails>
+          </Accordion>
+        );
+      })}
+      <Button fullWidth variant="contained" sx={{ mt: 2 }} onClick={openEmail}>
+        Continue with Selected →
+      </Button>
+    </>
+  );
+};
 
 const EditOrderSelect = ({ setView, recentOrders }) => (
   <>
@@ -832,62 +993,135 @@ const EditOrderSelect = ({ setView, recentOrders }) => (
   </>
 );
 
-const EditOrderScreen = ({ setView }) => (
-  <>
-    <BackButton onClick={() => setView("editOrderSelect")}>Cancel</BackButton>
-    <Typography variant="h6">Edit Order #12345</Typography>
-    <Alert severity="warning" sx={{ my: 2 }}>
-      This order is already in Toast, QuickBooks, and HubSpot. Changes will
-      update all systems.
-    </Alert>
-    <Accordion>
-      <AccordionSummary expandIcon={<ExpandMore />}>
-        Customer & Delivery
-      </AccordionSummary>
-      <AccordionDetails>
-        {" "}
-        (Editable customer fields would go here){" "}
-      </AccordionDetails>
-    </Accordion>
-    <Accordion defaultExpanded>
-      <AccordionSummary expandIcon={<ExpandMore />}>Items</AccordionSummary>
-      <AccordionDetails> (Editable item list would go here) </AccordionDetails>
-    </Accordion>
-    <SectionHeader>What will happen</SectionHeader>
-    <List dense>
-      <ListItem>
-        <Check fontSize="small" /> Update Toast order (new ticket)
-      </ListItem>
-      <ListItem>
-        <Check fontSize="small" /> Void old QBO invoice
-      </ListItem>
-      <ListItem>
-        <Check fontSize="small" /> Create new QBO invoice
-      </ListItem>
-      <ListItem>
-        <Check fontSize="small" /> Update HubSpot deal
-      </ListItem>
-      <ListItem>
-        <Check fontSize="small" /> Send revised invoice email
-      </ListItem>
-    </List>
-    <Divider sx={{ my: 2 }} />
-    <Box sx={{ display: "flex", justifyContent: "space-between" }}>
-      <Button color="error" startIcon={<Block />}>
-        Cancel Order
-      </Button>
-      <Button
-        variant="contained"
-        startIcon={<Update />}
-        onClick={() => alert("Order Updated!")}
-      >
-        Update Order
-      </Button>
-    </Box>
-  </>
-);
+const EditOrderScreen = ({ setView, order: initialOrder }) => {
+  const [order, setOrder] = useState(initialOrder);
+  return (
+    <>
+      <BackButton onClick={() => setView("editOrderSelect")}>Cancel</BackButton>
+      <Typography variant="h6">Edit Order #{order.orderNum}</Typography>
+      <Alert severity="warning" sx={{ my: 2 }}>
+        This order is already in all systems. Changes will create updates.
+      </Alert>
+      <Accordion>
+        <AccordionSummary expandIcon={<ExpandMore />}>
+          Customer & Delivery
+        </AccordionSummary>
+        <AccordionDetails>
+          <TextField
+            fullWidth
+            label="Customer Name"
+            defaultValue={DUMMY_DATA.knownCustomer.contactName}
+            margin="dense"
+            size="small"
+          />
+          <TextField
+            fullWidth
+            label="Delivery Time"
+            defaultValue="12:30"
+            margin="dense"
+            size="small"
+            type="time"
+          />
+        </AccordionDetails>
+      </Accordion>
+      <Accordion defaultExpanded>
+        <AccordionSummary expandIcon={<ExpandMore />}>Items</AccordionSummary>
+        <AccordionDetails>
+          {order.items.map((item) => (
+            <Box
+              key={item.id}
+              sx={{ display: "flex", alignItems: "center", gap: 1, my: 1 }}
+            >
+              <TextField
+                size="small"
+                label="Qty"
+                defaultValue={item.qty}
+                type="number"
+                sx={{ width: 70 }}
+              />
+              <Typography sx={{ flexGrow: 1 }}>{item.matchedItem}</Typography>
+              <IconButton size="small">
+                <Edit fontSize="inherit" />
+              </IconButton>
+            </Box>
+          ))}
+        </AccordionDetails>
+      </Accordion>
+      <SectionHeader>What will happen</SectionHeader>
+      <List dense>
+        <ListItem>
+          <Check fontSize="small" /> Update Toast order (new ticket)
+        </ListItem>
+        <ListItem>
+          <Check fontSize="small" /> Void old QBO invoice
+        </ListItem>
+        <ListItem>
+          <Check fontSize="small" /> Create new QBO invoice
+        </ListItem>
+        <ListItem>
+          <Check fontSize="small" /> Update HubSpot deal
+        </ListItem>
+        <ListItem>
+          <Check fontSize="small" /> Send revised invoice email
+        </ListItem>
+      </List>
+      <Divider sx={{ my: 2 }} />
+      <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+        <Button color="error" startIcon={<Block />}>
+          Cancel Order
+        </Button>
+        <Button
+          variant="contained"
+          startIcon={<Update />}
+          onClick={() => alert("Order Updated!")}
+        >
+          Update Order
+        </Button>
+      </Box>
+    </>
+  );
+};
 
-// FIX: Renamed this component from "Settings" to "SettingsPage"
+const CalendarView = ({ setView, events }) => {
+  const [viewMode, setViewMode] = useState("list");
+  return (
+    <>
+      <BackButton onClick={() => setView("homepage")}>Back</BackButton>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
+      >
+        <Typography variant="h6">Calendar</Typography>
+        <Tabs value={viewMode} onChange={(e, val) => setViewMode(val)}>
+          <Tab icon={<ViewList />} value="list" />
+          <Tab icon={<ViewModule />} value="grid" />
+        </Tabs>
+      </Box>
+      {viewMode === "list" ? (
+        <List>
+          {events.map((event) => (
+            <ListItem key={event.date}>
+              <ListItemText
+                primary={`${new Date(event.date).toDateString()}: ${
+                  event.customer
+                }`}
+                secondary={`${event.time} - $${event.total}`}
+              />
+            </ListItem>
+          ))}
+        </List>
+      ) : (
+        <Typography sx={{ mt: 2 }}>
+          (A calendar grid component would be rendered here)
+        </Typography>
+      )}
+    </>
+  );
+};
+
 const SettingsPage = ({ setView }) => (
   <>
     <BackButton onClick={() => setView("homepage")}>Back</BackButton>
@@ -924,24 +1158,66 @@ const SettingsPage = ({ setView }) => (
   </>
 );
 
+// --- Email Pane Components ---
+const EmailPane = ({ content }) => (
+  <Box sx={{ flexGrow: 1, p: 3, bgcolor: "white" }}>{content}</Box>
+);
+const DefaultEmail = () => (
+  <Paper elevation={0}>
+    <Typography variant="h5">Catering Request for Penn Law</Typography>
+    <Typography variant="body2" color="text.secondary">
+      From: Ashley Duchi (ashley@law.upenn.edu)
+    </Typography>
+    <Divider sx={{ my: 2 }} />
+    <Typography>Hi Sofia,</Typography>
+    <Typography paragraph>
+      We'd like to place a catering order for a faculty lunch. We have a budget
+      of **$500** and are expecting **30 people**. We need vegetarian options
+      and prefer things that travel well.
+    </Typography>
+    <Typography>Thanks,</Typography>
+    <Typography>Ashley</Typography>
+  </Paper>
+);
+const EmailDraft = ({ to, subject, body }) => (
+  <Card variant="outlined">
+    <CardContent>
+      <Typography color="text.secondary">To: {to}</Typography>
+      <Typography color="text.secondary">Subject: {subject}</Typography>
+      <Divider sx={{ my: 1 }} />
+      <Box sx={{ whiteSpace: "pre-wrap" }}>{body}</Box>
+      <Button variant="contained" sx={{ mt: 2 }}>
+        Send
+      </Button>
+    </CardContent>
+  </Card>
+);
+
 // --- Main App Component ---
 const App = () => {
   const [view, setView] = useState("homepage");
   const [customer, setCustomer] = useState(DUMMY_DATA.knownCustomer);
+  const [emailContent, setEmailContent] = useState(<DefaultEmail />);
 
-  // Simple loading state simulation
-  if (view.includes("loading")) {
-    return (
-      <AppContainer>
-        <Header />
-        <Divider />
-        <Box sx={{ p: 4, textAlign: "center" }}>
-          <CircularProgress />
-          <Typography sx={{ mt: 2 }}>{view.split("-")[1]}...</Typography>
-        </Box>
-      </AppContainer>
+  const openEmailDraft = (type) => {
+    let subject, body;
+    if (type === "confirmation") {
+      subject = `Your El Merkury Catering Order #${DUMMY_DATA.currentOrder.orderNum} is Confirmed!`;
+      body = `Dear Ashley,\n\nThank you for your order! Your invoice is attached.\n\nBest,\nSofia`;
+      setView("processOrderConfirmation");
+    } else {
+      subject = `Menu Proposal for your Event`;
+      body = `Hi Ashley,\n\nHere are a couple of proposals for your upcoming event based on your budget...\n\nOPTION 1: Traditional Guatemalan Feast...\n\nOPTION 2: Hearty Taco Bar...`;
+      // We don't want to change the right-side view here, just the email
+    }
+    setEmailContent(
+      <EmailDraft
+        to={DUMMY_DATA.knownCustomer.contactEmail}
+        subject={subject}
+        body={body}
+      />
     );
-  }
+  };
 
   const renderView = () => {
     switch (view) {
@@ -981,6 +1257,7 @@ const App = () => {
           <ProcessOrderConfirmation
             setView={setView}
             order={DUMMY_DATA.currentOrder}
+            openEmail={() => openEmailDraft("confirmation")}
           />
         );
       case "generateProposalStep1":
@@ -989,7 +1266,8 @@ const App = () => {
         return (
           <GenerateProposalStep2
             setView={setView}
-            proposals={DUMMY_DATA.proposals}
+            initialProposals={DUMMY_DATA.proposals}
+            openEmail={() => openEmailDraft("proposal")}
           />
         );
       case "editOrderSelect":
@@ -1000,10 +1278,15 @@ const App = () => {
           />
         );
       case "editOrderScreen":
-        return <EditOrderScreen setView={setView} />;
-      // FIX: Changed this to render the renamed component
+        return (
+          <EditOrderScreen setView={setView} order={DUMMY_DATA.currentOrder} />
+        );
       case "settingsPage":
         return <SettingsPage setView={setView} />;
+      case "calendarView":
+        return (
+          <CalendarView setView={setView} events={DUMMY_DATA.calendarEvents} />
+        );
       default:
         return <Homepage setView={setView} customer={customer} />;
     }
@@ -1011,25 +1294,32 @@ const App = () => {
 
   return (
     <ThemeProvider theme={theme}>
-      <AppContainer>
-        <Header />
-        <Divider sx={{ mb: 2 }} />
-        {renderView()}
-        <Button
-          size="small"
-          fullWidth
-          onClick={() =>
-            setCustomer(
-              customer.name === "New Customer"
-                ? DUMMY_DATA.knownCustomer
-                : DUMMY_DATA.newCustomer
-            )
-          }
-          sx={{ mt: 2, textTransform: "uppercase", color: "text.secondary" }}
-        >
-          Toggle Customer Context
-        </Button>
-      </AppContainer>
+      <Box sx={{ display: "flex", height: "100vh", bgcolor: "grey.100" }}>
+        <EmailPane content={emailContent} />
+        <AppContainer>
+          <Card>
+            <Header />
+            <Divider sx={{ mb: 2 }} />
+            <CardContent>{renderView()}</CardContent>
+          </Card>
+          <Button
+            size="small"
+            fullWidth
+            onClick={() => {
+              setCustomer(
+                customer.name === "New Customer"
+                  ? DUMMY_DATA.knownCustomer
+                  : DUMMY_DATA.newCustomer
+              );
+              setEmailContent(<DefaultEmail />);
+              setView("homepage");
+            }}
+            sx={{ mt: 2, textTransform: "uppercase", color: "text.secondary" }}
+          >
+            Reset & Toggle Customer
+          </Button>
+        </AppContainer>
+      </Box>
     </ThemeProvider>
   );
 };
