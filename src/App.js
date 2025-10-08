@@ -8,8 +8,6 @@ import {
   Button,
   Card,
   CardContent,
-  ToggleButtonGroup,
-  ToggleButton,
 } from "@mui/material";
 import MainLayout from "./components/MainLayout";
 import Homepage from "./pages/Homepage";
@@ -21,6 +19,7 @@ import GenerateProposalStep1 from "./pages/GenerateProposal/GenerateProposalStep
 import GenerateProposalStep2 from "./pages/GenerateProposal/GenerateProposalStep2";
 import POTrackingQueue from "./pages/POTrackingQueue";
 import PaymentMonitoring from "./pages/PaymentMonitoring";
+import WebsiteOrderQueue from "./pages/WebsiteOrderQueue";
 import EditOrderScreen from "./pages/EditOrderScreen";
 import SearchOrders from "./pages/SearchOrders";
 import SettingsPage from "./pages/SettingsPage";
@@ -53,93 +52,23 @@ const EmailDraft = ({ to, subject, body }) => (
   </Card>
 );
 
-const DefaultEmail = ({ customer, orderType }) => {
-  if (orderType === "satellite") {
-    return (
-      <Paper elevation={0}>
-        <Typography variant="h5">Mann Center Concert Event</Typography>
-        <Typography variant="body2" color="text.secondary">
-          From: {customer.contactName} ({customer.contactEmail})
-        </Typography>
-        <Divider sx={{ my: 2 }} />
-        <Typography>Hi Sofia,</Typography>
-        <Typography paragraph>
-          We have a concert on October 20th and need catering for the VIP tent.
-          <br />
-          <br />
-          Expected attendance: 500 people
-          <br />
-          Setup time: Food ready by 5:00 PM
-          <br />
-          <br />
-          Can you do rice bowls in large trays that we can keep warm? Please
-          quote for serving 500.
-        </Typography>
-        <Typography>Thanks,</Typography>
-        <Typography>{customer.contactName}</Typography>
-      </Paper>
-    );
-  }
-
-  return (
-    <Paper elevation={0}>
-      <Typography variant="h5">
-        Catering Request from {customer.name}
-      </Typography>
-      <Typography variant="body2" color="text.secondary">
-        From: {customer.contactName} ({customer.contactEmail})
-      </Typography>
-      <Divider sx={{ my: 2 }} />
-      <Typography>Hi Sofia,</Typography>
-      <Typography paragraph>
-        We'd like to place a catering order for a faculty lunch. For items, we
-        were thinking of the following:
-        <br />- 3 Large Chicken Bowls
-        <br />- 2 Small Cheesy Rice (one vegan if possible)
-        <br />- 1 order of Plantain Chips
-      </Typography>
-      <Typography>Thanks,</Typography>
-      <Typography>{customer.contactName}</Typography>
-    </Paper>
-  );
-};
-
-const WebsiteOrderNotification = ({ setView }) => (
-  <Paper elevation={0} sx={{ p: 3, bgcolor: "#E8F5E9" }}>
-    <Typography variant="h5" sx={{ mb: 2 }}>
-      🌐 Website Order Auto-Processed
+const DefaultEmail = ({ customer }) => (
+  <Paper elevation={0}>
+    <Typography variant="h5">Catering Request from {customer.name}</Typography>
+    <Typography variant="body2" color="text.secondary">
+      From: {customer.contactName} ({customer.contactEmail})
     </Typography>
-    <Card variant="outlined" sx={{ p: 2, bgcolor: "white" }}>
-      <Typography variant="body1" fontWeight="bold">
-        Order #12345679
-      </Typography>
-      <Typography color="text.secondary">Customer: SIG</Typography>
-      <Typography color="text.secondary">Total: $228.45 (PAID)</Typography>
-      <Typography color="text.secondary">
-        Delivery: Oct 12 at 11:00 AM
-      </Typography>
-      <Divider sx={{ my: 2 }} />
-      <Typography variant="body2" sx={{ mb: 1 }}>
-        ✅ Toast order created (T-5679)
-      </Typography>
-      <Typography variant="body2" sx={{ mb: 1 }}>
-        ✅ QBO invoice created (QBO-1235) - PAID
-      </Typography>
-      <Typography variant="body2" sx={{ mb: 1 }}>
-        ✅ HubSpot deal created
-      </Typography>
-      <Typography variant="body2" sx={{ mb: 1 }}>
-        ✅ Confirmation email sent
-      </Typography>
-      <Button
-        variant="outlined"
-        fullWidth
-        sx={{ mt: 2 }}
-        onClick={() => setView("editOrderScreen")}
-      >
-        View Order Details
-      </Button>
-    </Card>
+    <Divider sx={{ my: 2 }} />
+    <Typography>Hi Sofia,</Typography>
+    <Typography paragraph>
+      We'd like to place a catering order for a faculty lunch. For items, we
+      were thinking of the following:
+      <br />- 3 Large Chicken Bowls
+      <br />- 2 Small Cheesy Rice (one vegan if possible)
+      <br />- 1 order of Plantain Chips
+    </Typography>
+    <Typography>Thanks,</Typography>
+    <Typography>{customer.contactName}</Typography>
   </Paper>
 );
 
@@ -167,9 +96,8 @@ const ProcessOrderConfirmation = ({ setView, order, openEmail }) => (
 const App = () => {
   const [view, setView] = useState("homepage");
   const [customer, setCustomer] = useState(DUMMY_DATA.knownCustomer);
-  const [orderType, setOrderType] = useState("email"); // email, website, satellite
   const [emailContent, setEmailContent] = useState(
-    <DefaultEmail customer={DUMMY_DATA.knownCustomer} orderType="email" />
+    <DefaultEmail customer={DUMMY_DATA.knownCustomer} />
   );
   const [notifications, setNotifications] = useState(DUMMY_DATA.notifications);
   const [showNotifications, setShowNotifications] = useState(false);
@@ -233,6 +161,7 @@ const App = () => {
             recentOrders={DUMMY_DATA.recentOrders}
             poQueue={DUMMY_DATA.poTrackingQueue}
             paymentTracking={DUMMY_DATA.paymentTracking}
+            websiteOrders={DUMMY_DATA.websiteOrderQueue}
           />
         );
       case "processOrderStep1":
@@ -265,8 +194,6 @@ const App = () => {
         return (
           <ProcessSatelliteOrder
             setView={setView}
-            customer={customer}
-            order={DUMMY_DATA.satelliteOrder}
             handleProcessOrder={handleProcessOrder}
           />
         );
@@ -309,6 +236,13 @@ const App = () => {
             paymentTracking={DUMMY_DATA.paymentTracking}
           />
         );
+      case "websiteOrderQueue":
+        return (
+          <WebsiteOrderQueue
+            setView={setView}
+            websiteOrders={DUMMY_DATA.websiteOrderQueue}
+          />
+        );
       case "editOrderScreen":
         return (
           <EditOrderScreen
@@ -333,34 +267,21 @@ const App = () => {
             recentOrders={DUMMY_DATA.recentOrders}
             poQueue={DUMMY_DATA.poTrackingQueue}
             paymentTracking={DUMMY_DATA.paymentTracking}
+            websiteOrders={DUMMY_DATA.websiteOrderQueue}
           />
         );
     }
   };
 
-  const handleOrderTypeToggle = (event, newOrderType) => {
-    if (newOrderType !== null) {
-      setOrderType(newOrderType);
-      if (newOrderType === "email") {
-        setCustomer(DUMMY_DATA.knownCustomer);
-        setEmailContent(
-          <DefaultEmail customer={DUMMY_DATA.knownCustomer} orderType="email" />
-        );
-      } else if (newOrderType === "website") {
-        setCustomer(DUMMY_DATA.otherCustomer);
-        setEmailContent(<WebsiteOrderNotification setView={setView} />);
-      } else if (newOrderType === "satellite") {
-        setCustomer(DUMMY_DATA.mannCenter);
-        setEmailContent(
-          <DefaultEmail
-            customer={DUMMY_DATA.mannCenter}
-            orderType="satellite"
-          />
-        );
-      }
-      setView("homepage");
-      setShowHelpTip(false);
-    }
+  const handleCustomerToggle = () => {
+    const newCustomer =
+      customer.name === "Penn Law"
+        ? DUMMY_DATA.otherCustomer
+        : DUMMY_DATA.knownCustomer;
+    setCustomer(newCustomer);
+    setEmailContent(<DefaultEmail customer={newCustomer} />);
+    setView("homepage");
+    setShowHelpTip(false);
   };
 
   return (
@@ -375,19 +296,16 @@ const App = () => {
       >
         {showHelpTip && <HelpTip onDismiss={() => setShowHelpTip(false)} />}
         {renderView()}
-        <Box sx={{ mt: 2, display: "flex", justifyContent: "center" }}>
-          <ToggleButtonGroup
-            value={orderType}
-            exclusive
-            onChange={handleOrderTypeToggle}
-            size="small"
-            fullWidth
-          >
-            <ToggleButton value="email">📧 Email</ToggleButton>
-            <ToggleButton value="website">🌐 Website</ToggleButton>
-            <ToggleButton value="satellite">🎪 Satellite</ToggleButton>
-          </ToggleButtonGroup>
-        </Box>
+
+        {/* Customer Toggle for Demo */}
+        <Button
+          size="small"
+          fullWidth
+          onClick={handleCustomerToggle}
+          sx={{ mt: 2, textTransform: "uppercase", color: "text.secondary" }}
+        >
+          Toggle Customer Context (Demo)
+        </Button>
       </MainLayout>
     </ThemeProvider>
   );

@@ -12,20 +12,24 @@ import {
   ListItemButton,
   Chip,
   Alert,
+  Badge,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
 } from "@mui/material";
 import {
   BusinessCenter,
   Event,
   History,
   RestaurantMenu,
-  Search,
   Settings,
   ShoppingCart,
-  Today,
   Warning,
   Assignment,
   Payment,
   Satellite,
+  ExpandMore,
+  Language,
 } from "@mui/icons-material";
 import SectionHeader from "../components/SectionHeader";
 
@@ -35,16 +39,23 @@ const Homepage = ({
   recentOrders,
   poQueue,
   paymentTracking,
+  websiteOrders,
 }) => {
   const pendingPOs = poQueue.filter((po) => po.poStatus === "Awaiting PO");
   const receivedPOs = poQueue.filter((po) => po.poStatus === "PO Received");
   const overduePayments = paymentTracking.filter(
     (p) => p.paymentStatus === "Overdue"
   );
+  const pendingWebsiteOrders =
+    websiteOrders?.filter((wo) => wo.status === "pending_review") || [];
+
+  const totalActionItems =
+    receivedPOs.length + overduePayments.length + pendingWebsiteOrders.length;
 
   return (
     <>
-      <SectionHeader>📧 Current Email Context:</SectionHeader>
+      {/* Email Context */}
+      <SectionHeader>📧 Current Email</SectionHeader>
       <Card
         variant="outlined"
         sx={{
@@ -87,16 +98,14 @@ const Homepage = ({
                   }
                 />
               </Box>
-              <Typography variant="body2">
+              <Typography variant="body2" sx={{ mt: 1 }}>
                 📊 {customer.orderCount} orders | $
-                {customer.ytdSpend.toLocaleString()} YTD
-              </Typography>
-              <Typography variant="body2">
-                Last order: {customer.lastOrder}
+                {customer.ytdSpend.toLocaleString()} YTD | Avg margin:{" "}
+                {customer.avgMargin}%
               </Typography>
               {customer.flags?.requiresPO && (
                 <Chip
-                  label="Requires PO"
+                  label="⚠️ Requires PO"
                   size="small"
                   color="warning"
                   sx={{ mt: 1 }}
@@ -107,189 +116,242 @@ const Homepage = ({
         </CardContent>
       </Card>
 
-      {/* Action Alerts */}
-      {receivedPOs.length > 0 && (
-        <Alert
-          severity="success"
-          sx={{ mt: 2 }}
-          action={
-            <Button
-              color="inherit"
-              size="small"
-              onClick={() => setView("poTrackingQueue")}
-            >
-              View
-            </Button>
-          }
-        >
-          <Typography variant="body2" fontWeight="bold">
-            {receivedPOs.length} PO{receivedPOs.length > 1 ? "s" : ""} received
-            - ready to finalize
-          </Typography>
-        </Alert>
-      )}
-
-      {overduePayments.length > 0 && (
-        <Alert
-          severity="error"
-          sx={{ mt: 2 }}
-          action={
-            <Button
-              color="inherit"
-              size="small"
-              onClick={() => setView("paymentMonitoring")}
-            >
-              View
-            </Button>
-          }
-        >
-          <Typography variant="body2" fontWeight="bold">
-            {overduePayments.length} overdue payment
-            {overduePayments.length > 1 ? "s" : ""}
-          </Typography>
-        </Alert>
-      )}
-
-      <Divider sx={{ my: 2, borderStyle: "dashed" }} />
+      <Divider sx={{ my: 2 }} />
 
       {/* Primary Actions */}
+      <Box sx={{ display: "flex", gap: 1, mb: 2 }}>
+        <Button
+          fullWidth
+          variant="contained"
+          startIcon={<ShoppingCart />}
+          onClick={() => setView("processOrderStep1")}
+          sx={{ flexGrow: 1 }}
+        >
+          Process Order
+        </Button>
+        <Button
+          fullWidth
+          variant="contained"
+          startIcon={<RestaurantMenu />}
+          onClick={() => setView("generateProposalStep1")}
+          sx={{ flexGrow: 1 }}
+        >
+          Generate Proposal
+        </Button>
+      </Box>
+
       <Button
         fullWidth
-        variant="contained"
-        startIcon={<ShoppingCart />}
-        sx={{ mb: 1, justifyContent: "flex-start", p: 1.5 }}
-        onClick={() =>
-          customer.category === "Satellite"
-            ? setView("processSatelliteOrder")
-            : setView("processOrderStep1")
-        }
+        variant="outlined"
+        startIcon={<Satellite />}
+        onClick={() => setView("processSatelliteOrder")}
+        sx={{ mb: 2 }}
       >
-        Process Catering Order
-      </Button>
-      <Button
-        fullWidth
-        variant="contained"
-        startIcon={<RestaurantMenu />}
-        sx={{ mb: 1, justifyContent: "flex-start", p: 1.5 }}
-        onClick={() => setView("generateProposalStep1")}
-      >
-        Generate Menu Proposal
+        Satellite Event (Mann / Churro Bike)
       </Button>
 
-      {/* Work Queues */}
-      {(pendingPOs.length > 0 || receivedPOs.length > 0) && (
+      {/* Action Items */}
+      {totalActionItems > 0 && (
         <>
-          <Button
-            fullWidth
-            onClick={() => setView("poTrackingQueue")}
-            sx={{ justifyContent: "flex-start", mt: 2.5, mb: 1 }}
+          <SectionHeader>
+            <Badge badgeContent={totalActionItems} color="error" sx={{ mr: 1 }}>
+              <Assignment />
+            </Badge>
+            Action Items
+          </SectionHeader>
+
+          {receivedPOs.length > 0 && (
+            <Alert
+              severity="success"
+              sx={{ mb: 1 }}
+              action={
+                <Button
+                  color="inherit"
+                  size="small"
+                  onClick={() => setView("poTrackingQueue")}
+                >
+                  View
+                </Button>
+              }
+            >
+              <Typography variant="body2" fontWeight="bold">
+                {receivedPOs.length} PO{receivedPOs.length > 1 ? "s" : ""} ready
+                to finalize
+              </Typography>
+            </Alert>
+          )}
+
+          {overduePayments.length > 0 && (
+            <Alert
+              severity="error"
+              sx={{ mb: 1 }}
+              action={
+                <Button
+                  color="inherit"
+                  size="small"
+                  onClick={() => setView("paymentMonitoring")}
+                >
+                  View
+                </Button>
+              }
+            >
+              <Typography variant="body2" fontWeight="bold">
+                {overduePayments.length} overdue payment
+                {overduePayments.length > 1 ? "s" : ""}
+              </Typography>
+            </Alert>
+          )}
+
+          {pendingWebsiteOrders.length > 0 && (
+            <Alert
+              severity="info"
+              sx={{ mb: 1 }}
+              action={
+                <Button
+                  color="inherit"
+                  size="small"
+                  onClick={() => setView("websiteOrderQueue")}
+                >
+                  View
+                </Button>
+              }
+            >
+              <Typography variant="body2" fontWeight="bold">
+                {pendingWebsiteOrders.length} website order
+                {pendingWebsiteOrders.length > 1 ? "s" : ""} pending review
+              </Typography>
+            </Alert>
+          )}
+        </>
+      )}
+
+      {/* Work Queues - Collapsible */}
+      <Accordion sx={{ mb: 1 }}>
+        <AccordionSummary expandIcon={<ExpandMore />}>
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              width: "100%",
+              pr: 2,
+            }}
           >
-            <Typography variant="overline" color="text.secondary">
-              PO Work Queue ({pendingPOs.length + receivedPOs.length})
+            <Typography variant="body2" fontWeight="bold">
+              Work Queues
             </Typography>
-          </Button>
+            <Chip
+              label={`${
+                pendingPOs.length +
+                receivedPOs.length +
+                pendingWebsiteOrders.length
+              }`}
+              size="small"
+            />
+          </Box>
+        </AccordionSummary>
+        <AccordionDetails sx={{ p: 0 }}>
           <List dense>
-            {poQueue.slice(0, 3).map((po) => (
+            <ListItemButton onClick={() => setView("poTrackingQueue")}>
+              <ListItemIcon sx={{ minWidth: 36 }}>
+                <Badge
+                  badgeContent={pendingPOs.length + receivedPOs.length}
+                  color="warning"
+                >
+                  <Assignment />
+                </Badge>
+              </ListItemIcon>
+              <ListItemText primary="PO Tracking" />
+            </ListItemButton>
+            <ListItemButton onClick={() => setView("paymentMonitoring")}>
+              <ListItemIcon sx={{ minWidth: 36 }}>
+                <Badge badgeContent={overduePayments.length} color="error">
+                  <Payment />
+                </Badge>
+              </ListItemIcon>
+              <ListItemText primary="Payment Monitoring" />
+            </ListItemButton>
+            <ListItemButton onClick={() => setView("websiteOrderQueue")}>
+              <ListItemIcon sx={{ minWidth: 36 }}>
+                <Badge badgeContent={pendingWebsiteOrders.length} color="info">
+                  <Language />
+                </Badge>
+              </ListItemIcon>
+              <ListItemText primary="Website Orders" />
+            </ListItemButton>
+          </List>
+        </AccordionDetails>
+      </Accordion>
+
+      {/* Recent Orders - Collapsible */}
+      <Accordion defaultExpanded>
+        <AccordionSummary expandIcon={<ExpandMore />}>
+          <Typography variant="body2" fontWeight="bold">
+            Recent Orders
+          </Typography>
+        </AccordionSummary>
+        <AccordionDetails sx={{ p: 0 }}>
+          <List dense>
+            {recentOrders.slice(0, 5).map((order) => (
               <ListItemButton
-                key={po.orderNum}
-                onClick={() => setView("poTrackingQueue")}
+                key={order.id}
+                onClick={() => setView("editOrderScreen")}
               >
                 <ListItemIcon sx={{ minWidth: 30 }}>
-                  <Assignment
-                    color={
-                      po.poStatus === "PO Received" ? "success" : "warning"
-                    }
-                  />
+                  {order.status === "scheduled" ? (
+                    <Event color="primary" fontSize="small" />
+                  ) : (
+                    <History color="action" fontSize="small" />
+                  )}
                 </ListItemIcon>
                 <ListItemText
-                  primary={`${po.customerName} - ${po.deliveryDate}`}
+                  primary={`${order.customer} - ${order.date}`}
                   secondary={
-                    po.poStatus === "PO Received"
-                      ? `PO: ${po.poNumber}`
-                      : `Awaiting PO (Day ${po.daysWaiting})`
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 0.5,
+                        mt: 0.5,
+                      }}
+                    >
+                      <Chip label={order.channel} size="small" />
+                      <Typography variant="caption">
+                        ${order.total.toFixed(2)}
+                      </Typography>
+                    </Box>
                   }
                 />
               </ListItemButton>
             ))}
-          </List>
-        </>
-      )}
-
-      {/* Recent Orders */}
-      <Button
-        fullWidth
-        onClick={() => setView("searchOrders")}
-        sx={{ justifyContent: "flex-start", mt: 2.5, mb: 1 }}
-      >
-        <Typography variant="overline" color="text.secondary">
-          Recent Orders
-        </Typography>
-      </Button>
-      <List dense>
-        {recentOrders.slice(0, 5).map((order) => (
-          <ListItemButton
-            key={order.id}
-            onClick={() => setView("editOrderScreen")}
-          >
-            <ListItemIcon sx={{ minWidth: 30 }}>
-              {order.status === "scheduled" ? (
-                <Event color="primary" />
-              ) : (
-                <History color="action" />
-              )}
-            </ListItemIcon>
-            <ListItemText
-              primary={`${order.customer} - ${order.date}`}
-              secondary={
-                <Box
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 1,
-                    mt: 0.5,
-                  }}
-                >
-                  <Chip label={order.channel} size="small" />
-                  <Typography variant="caption">
-                    ${order.total.toFixed(2)}
+            <ListItemButton onClick={() => setView("searchOrders")}>
+              <ListItemText
+                primary={
+                  <Typography variant="body2" color="primary">
+                    View All Orders →
                   </Typography>
-                </Box>
-              }
-            />
-          </ListItemButton>
-        ))}
-      </List>
+                }
+              />
+            </ListItemButton>
+          </List>
+        </AccordionDetails>
+      </Accordion>
 
-      {/* Navigation */}
+      {/* Quick Links */}
       <Box
         sx={{
           display: "flex",
           justifyContent: "space-between",
           mt: 2,
-          flexWrap: "wrap",
           gap: 1,
         }}
       >
         <Button
           size="small"
-          startIcon={<Today />}
+          startIcon={<Event />}
           onClick={() => setView("calendarView")}
         >
           Calendar
-        </Button>
-        <Button
-          size="small"
-          startIcon={<Payment />}
-          onClick={() => setView("paymentMonitoring")}
-        >
-          Payments
-        </Button>
-        <Button
-          size="small"
-          startIcon={<Search />}
-          onClick={() => setView("searchOrders")}
-        >
-          Search
         </Button>
         <Button
           size="small"

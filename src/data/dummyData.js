@@ -752,4 +752,34 @@ export const API_HELPERS = {
       }, 2000);
     });
   },
+
+  websiteOrderQueue: [
+    {
+      orderNum: "12345681",
+      customerName: "SIG",
+      contactEmail: "dk@sig.com",
+      orderDate: "2025-10-08 14:35",
+      deliveryDate: "2025-10-12",
+      deliveryTime: "11:00 AM",
+      total: 228.45,
+      paymentStatus: "PAID",
+      paymentMethod: "Stripe",
+      itemsSummary: "2x Taco Bar, Horchata",
+      status: "pending_review", // pending_review, auto_processed
+    },
+    {
+      orderNum: "12345682",
+      customerName: "Comcast",
+      contactEmail: "events@comcast.com",
+      orderDate: "2025-10-08 09:15",
+      deliveryDate: "2025-10-15",
+      deliveryTime: "12:30 PM",
+      total: 450.0,
+      paymentStatus: "PAID",
+      paymentMethod: "Stripe",
+      itemsSummary: "3x Pepian Chicken, Rice",
+      status: "auto_processed",
+      processedDate: "2025-10-08 09:16",
+    },
+  ],
 };
