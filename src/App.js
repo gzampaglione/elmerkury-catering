@@ -93,8 +93,29 @@ const ProcessOrderConfirmation = ({ setView, order, openEmail }) => (
   </>
 );
 
+// Order numbers are the only value the approval workflow is allowed to hand us
+// through the URL. Anything that is not exactly EM-YYYYMMDD-NNN is discarded
+// rather than rendered or forwarded on.
+const ORDER_NUMBER_PATTERN = /^EM-\d{8}-\d{3}$/;
+
+const readDeepLink = () => {
+  try {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("view") !== "editOrder") return null;
+    const orderNum = params.get("order") || "";
+    return ORDER_NUMBER_PATTERN.test(orderNum) ? orderNum : null;
+  } catch {
+    return null;
+  }
+};
+
 const App = () => {
-  const [view, setView] = useState("homepage");
+  // Make.com's approval webhook redirects here as /?view=editOrder&order=EM-...
+  // when Sofia picks "EDIT" in the review email.
+  const [deepLinkedOrderNum] = useState(readDeepLink);
+  const [view, setView] = useState(
+    deepLinkedOrderNum ? "editOrderScreen" : "homepage"
+  );
   const [customer, setCustomer] = useState(DUMMY_DATA.knownCustomer);
   const [emailContent, setEmailContent] = useState(
     <DefaultEmail customer={DUMMY_DATA.knownCustomer} />
@@ -250,7 +271,11 @@ const App = () => {
         return (
           <EditOrderScreen
             setView={setView}
-            order={DUMMY_DATA.currentOrder}
+            order={
+              deepLinkedOrderNum
+                ? { ...DUMMY_DATA.currentOrder, orderNum: deepLinkedOrderNum }
+                : DUMMY_DATA.currentOrder
+            }
             customer={DUMMY_DATA.knownCustomer}
           />
         );

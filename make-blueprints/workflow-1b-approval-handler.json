@@ -1,0 +1,1539 @@
+{
+    "name": "El Merkury - WF1b Approval Handler (Webhook)",
+    "flow": [
+        {
+            "id": 1,
+            "module": "gateway:CustomWebHook",
+            "version": 1,
+            "parameters": {
+                "hook": "WF1b_Approval_Webhook"
+            },
+            "mapper": {},
+            "metadata": {
+                "designer": {
+                    "x": 0,
+                    "y": 300,
+                    "name": "1. Webhook: Receive Approval Action"
+                },
+                "restore": {},
+                "expect": [
+                    {
+                        "name": "order",
+                        "type": "text",
+                        "label": "Order Number"
+                    },
+                    {
+                        "name": "action",
+                        "type": "text",
+                        "label": "Action (approve/edit/reject)"
+                    }
+                ]
+            }
+        },
+        {
+            "id": 2,
+            "module": "datastore:getRecord",
+            "version": 1,
+            "parameters": {
+                "ds": "Pending_Approvals"
+            },
+            "mapper": {
+                "key": "{{1.order}}"
+            },
+            "metadata": {
+                "designer": {
+                    "x": 300,
+                    "y": 300,
+                    "name": "2. Data Store: Get Pending Order"
+                },
+                "restore": {},
+                "expect": [
+                    {
+                        "name": "key",
+                        "type": "text",
+                        "label": "Key (Order Number)",
+                        "required": true
+                    }
+                ]
+            }
+        },
+        {
+            "id": 3,
+            "module": "json:ParseJSON",
+            "version": 1,
+            "parameters": {},
+            "mapper": {
+                "json": "{{2.order_data}}"
+            },
+            "metadata": {
+                "designer": {
+                    "x": 600,
+                    "y": 300,
+                    "name": "3. Parse Stored Order Data"
+                },
+                "restore": {},
+                "expect": [
+                    {
+                        "name": "json",
+                        "type": "text",
+                        "label": "JSON string",
+                        "required": true
+                    }
+                ]
+            }
+        },
+        {
+            "id": 4,
+            "module": "builtin:BasicRouter",
+            "version": 1,
+            "parameters": {},
+            "mapper": {},
+            "metadata": {
+                "designer": {
+                    "x": 900,
+                    "y": 300,
+                    "name": "4. Router: Approve / Edit / Reject"
+                }
+            },
+            "routes": [
+                {
+                    "flow": [
+                        {
+                            "id": 5,
+                            "module": "quickbooks:CreateInvoice",
+                            "version": 7,
+                            "parameters": {},
+                            "mapper": {
+                                "CustomerRef": "{{3.customer_email}}",
+                                "Line": [
+                                    {
+                                        "DetailType": "SalesItemLineDetail",
+                                        "Description": "{{3.items}}",
+                                        "Amount": "{{3.subtotal}}"
+                                    }
+                                ],
+                                "DueDate": "{{if(3.requires_po; addDays(now; 30); now)}}",
+                                "CustomerMemo": "El Merkury Catering — Order {{3.order_number}}\nDelivery: {{3.delivery_date}} at {{3.delivery_time}}\nAddress: {{3.delivery_address}}{{if(3.special_requests; newline; \"\")}}{{3.special_requests}}",
+                                "TxnTaxDetail": "{{if(3.tax_exempt; \"\"; 3.tax)}}",
+                                "CustomField": [
+                                    {
+                                        "Name": "order_number",
+                                        "StringValue": "{{3.order_number}}"
+                                    },
+                                    {
+                                        "Name": "delivery_date",
+                                        "StringValue": "{{3.delivery_date}}"
+                                    }
+                                ]
+                            },
+                            "metadata": {
+                                "designer": {
+                                    "x": 1200,
+                                    "y": 0,
+                                    "name": "5. QBO: Create Invoice"
+                                },
+                                "restore": {},
+                                "expect": [
+                                    {
+                                        "name": "CustomerRef",
+                                        "type": "text",
+                                        "label": "Customer"
+                                    },
+                                    {
+                                        "name": "Line",
+                                        "type": "array",
+                                        "label": "Line Items"
+                                    },
+                                    {
+                                        "name": "DueDate",
+                                        "type": "date",
+                                        "label": "Due Date"
+                                    },
+                                    {
+                                        "name": "CustomerMemo",
+                                        "type": "text",
+                                        "label": "Customer Memo"
+                                    },
+                                    {
+                                        "name": "TxnTaxDetail",
+                                        "type": "text",
+                                        "label": "Tax Detail"
+                                    },
+                                    {
+                                        "name": "CustomField",
+                                        "type": "array",
+                                        "label": "Custom Fields"
+                                    }
+                                ]
+                            },
+                            "filter": {
+                                "name": "APPROVE",
+                                "conditions": [
+                                    [
+                                        {
+                                            "a": "{{1.action}}",
+                                            "b": "approve",
+                                            "o": "text:equal"
+                                        }
+                                    ],
+                                    [
+                                        {
+                                            "a": "{{1.token}}",
+                                            "b": "YOUR_APPROVAL_SHARED_SECRET",
+                                            "o": "text:equal"
+                                        }
+                                    ],
+                                    [
+                                        {
+                                            "a": "{{1.order}}",
+                                            "b": "^EM-\\d{8}-\\d{3}$",
+                                            "o": "text:pattern"
+                                        }
+                                    ],
+                                    [
+                                        {
+                                            "a": "{{2.status}}",
+                                            "b": "pending_review",
+                                            "o": "text:equal"
+                                        }
+                                    ],
+                                    [
+                                        {
+                                            "a": "{{1.method}}",
+                                            "b": "POST",
+                                            "o": "text:equal"
+                                        }
+                                    ]
+                                ]
+                            }
+                        },
+                        {
+                            "id": 6,
+                            "module": "square:creatOrder",
+                            "version": 2,
+                            "parameters": {},
+                            "mapper": {
+                                "location_id": "YOUR_SQUARE_LOCATION_ID",
+                                "line_items": "{{3.items}}",
+                                "fulfillments": [
+                                    {
+                                        "type": "DELIVERY",
+                                        "state": "PROPOSED",
+                                        "delivery_details": {
+                                            "recipient": {
+                                                "display_name": "{{3.customer_name}}",
+                                                "email_address": "{{3.customer_email}}",
+                                                "address": {
+                                                    "address_line_1": "{{3.delivery_address}}"
+                                                }
+                                            },
+                                            "deliver_at": "{{3.delivery_date}}T{{3.delivery_time}}:00Z",
+                                            "note": "Order {{3.order_number}} | {{if(3.special_requests; 3.special_requests; \"No special requests\")}}"
+                                        }
+                                    }
+                                ],
+                                "note": "Order: {{3.order_number}} | QBO Invoice: {{5.Id}} | Org: {{3.customer_org}}{{if(3.requires_po; \" | PO REQUIRED — HOLD FOR PO\"; \"\")}}"
+                            },
+                            "metadata": {
+                                "designer": {
+                                    "x": 1500,
+                                    "y": 0,
+                                    "name": "6. Square: Create KDS Order"
+                                },
+                                "restore": {},
+                                "expect": [
+                                    {
+                                        "name": "location_id",
+                                        "type": "text",
+                                        "label": "Location ID",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "line_items",
+                                        "type": "array",
+                                        "label": "Line Items"
+                                    },
+                                    {
+                                        "name": "fulfillments",
+                                        "type": "array",
+                                        "label": "Fulfillments"
+                                    },
+                                    {
+                                        "name": "note",
+                                        "type": "text",
+                                        "label": "Order Note"
+                                    }
+                                ]
+                            }
+                        },
+                        {
+                            "id": 7,
+                            "module": "hubspotcrm:createDeal",
+                            "version": 2,
+                            "parameters": {},
+                            "mapper": {
+                                "dealname": "{{3.order_number}} — {{3.customer_org}} — ${{3.total}}",
+                                "amount": "{{3.total}}",
+                                "dealstage": "{{if(3.requires_po; \"contractsent\"; \"closedwon\")}}",
+                                "pipeline": "default",
+                                "closedate": "{{3.delivery_date}}",
+                                "description": "Catering order {{3.order_number}}\nCustomer: {{3.customer_name}} ({{3.customer_org}})\nDelivery: {{3.delivery_date}} at {{3.delivery_time}}\nAddress: {{3.delivery_address}}\nItems: {{3.items}}\nSubtotal: ${{3.subtotal}} | Tax: ${{3.tax}} | Total: ${{3.total}}\nGross Margin: {{3.gross_margin_pct}}%\nPayment Terms: {{3.payment_terms}}\nQBO Invoice: {{5.Id}}\nSquare Order: {{6.id}}"
+                            },
+                            "metadata": {
+                                "designer": {
+                                    "x": 1800,
+                                    "y": 0,
+                                    "name": "7. HubSpot: Create Deal"
+                                },
+                                "restore": {},
+                                "expect": [
+                                    {
+                                        "name": "dealname",
+                                        "type": "text",
+                                        "label": "Deal Name",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "amount",
+                                        "type": "number",
+                                        "label": "Amount"
+                                    },
+                                    {
+                                        "name": "dealstage",
+                                        "type": "select",
+                                        "label": "Deal Stage"
+                                    },
+                                    {
+                                        "name": "pipeline",
+                                        "type": "select",
+                                        "label": "Pipeline"
+                                    },
+                                    {
+                                        "name": "closedate",
+                                        "type": "date",
+                                        "label": "Close Date"
+                                    },
+                                    {
+                                        "name": "description",
+                                        "type": "text",
+                                        "label": "Description"
+                                    }
+                                ]
+                            }
+                        },
+                        {
+                            "id": 8,
+                            "module": "http:ActionSendData",
+                            "version": 3,
+                            "parameters": {
+                                "handleErrors": true
+                            },
+                            "mapper": {
+                                "ca": "",
+                                "qs": [],
+                                "url": "https://YOUR_SUPABASE_PROJECT.supabase.co/rest/v1/order_audit_log",
+                                "data": "{\"order_number\": \"{{3.order_number}}\", \"action\": \"approved\", \"customer_name\": \"{{3.customer_name}}\", \"customer_org\": \"{{3.customer_org}}\", \"customer_email\": \"{{3.customer_email}}\", \"total\": {{3.total}}, \"subtotal\": {{3.subtotal}}, \"tax\": {{3.tax}}, \"delivery_fee\": {{3.delivery_fee}}, \"gross_margin_pct\": {{3.gross_margin_pct}}, \"delivery_date\": \"{{3.delivery_date}}\", \"delivery_time\": \"{{3.delivery_time}}\", \"delivery_address\": \"{{3.delivery_address}}\", \"is_penn_entity\": {{3.is_penn_entity}}, \"requires_po\": {{3.requires_po}}, \"payment_terms\": \"{{3.payment_terms}}\", \"qbo_invoice_id\": \"{{5.Id}}\", \"square_order_id\": \"{{6.id}}\", \"hubspot_deal_id\": \"{{7.id}}\", \"items\": {{3.items}}, \"approved_at\": \"{{now}}\"}",
+                                "gzip": true,
+                                "method": "post",
+                                "headers": [
+                                    {
+                                        "name": "Content-Type",
+                                        "value": "application/json"
+                                    },
+                                    {
+                                        "name": "apikey",
+                                        "value": "YOUR_SUPABASE_SERVICE_ROLE_KEY"
+                                    },
+                                    {
+                                        "name": "Authorization",
+                                        "value": "Bearer YOUR_SUPABASE_SERVICE_ROLE_KEY"
+                                    },
+                                    {
+                                        "name": "Prefer",
+                                        "value": "return=minimal"
+                                    }
+                                ],
+                                "timeout": "30",
+                                "useMtls": false,
+                                "bodyType": "raw",
+                                "contentType": "application/json",
+                                "serializeUrl": false,
+                                "shareCookies": false,
+                                "parseResponse": true,
+                                "followRedirect": true,
+                                "useQuerystring": false,
+                                "followAllRedirects": false,
+                                "rejectUnauthorized": true
+                            },
+                            "metadata": {
+                                "designer": {
+                                    "x": 2100,
+                                    "y": 0,
+                                    "name": "8. Supabase: Log Approved Order"
+                                },
+                                "restore": {
+                                    "expect": {
+                                        "qs": {
+                                            "mode": "chose"
+                                        },
+                                        "method": {
+                                            "mode": "chose",
+                                            "label": "POST"
+                                        },
+                                        "headers": {
+                                            "mode": "chose",
+                                            "items": [
+                                                null,
+                                                null,
+                                                null,
+                                                null
+                                            ]
+                                        },
+                                        "bodyType": {
+                                            "label": "Raw"
+                                        },
+                                        "contentType": {
+                                            "label": "JSON (application/json)"
+                                        }
+                                    }
+                                },
+                                "parameters": [
+                                    {
+                                        "name": "handleErrors",
+                                        "type": "boolean",
+                                        "label": "Evaluate all states as errors (except for 2xx and 3xx )",
+                                        "required": true
+                                    }
+                                ],
+                                "expect": [
+                                    {
+                                        "name": "url",
+                                        "type": "url",
+                                        "label": "URL",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "method",
+                                        "type": "select",
+                                        "label": "Method",
+                                        "required": true,
+                                        "validate": {
+                                            "enum": [
+                                                "get",
+                                                "head",
+                                                "post",
+                                                "put",
+                                                "patch",
+                                                "delete",
+                                                "options"
+                                            ]
+                                        }
+                                    },
+                                    {
+                                        "name": "headers",
+                                        "spec": [
+                                            {
+                                                "name": "name",
+                                                "type": "text",
+                                                "label": "Name",
+                                                "required": true
+                                            },
+                                            {
+                                                "name": "value",
+                                                "type": "text",
+                                                "label": "Value"
+                                            }
+                                        ],
+                                        "type": "array",
+                                        "label": "Headers"
+                                    },
+                                    {
+                                        "name": "qs",
+                                        "spec": [
+                                            {
+                                                "name": "name",
+                                                "type": "text",
+                                                "label": "Name",
+                                                "required": true
+                                            },
+                                            {
+                                                "name": "value",
+                                                "type": "text",
+                                                "label": "Value"
+                                            }
+                                        ],
+                                        "type": "array",
+                                        "label": "Query String"
+                                    },
+                                    {
+                                        "name": "bodyType",
+                                        "type": "select",
+                                        "label": "Body type",
+                                        "validate": {
+                                            "enum": [
+                                                "raw",
+                                                "x_www_form_urlencoded",
+                                                "multipart_form_data"
+                                            ]
+                                        }
+                                    },
+                                    {
+                                        "name": "parseResponse",
+                                        "type": "boolean",
+                                        "label": "Parse response",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "timeout",
+                                        "type": "uinteger",
+                                        "label": "Timeout",
+                                        "validate": {
+                                            "max": 300,
+                                            "min": 1
+                                        }
+                                    },
+                                    {
+                                        "name": "shareCookies",
+                                        "type": "boolean",
+                                        "label": "Share cookies with other HTTP modules",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "ca",
+                                        "type": "cert",
+                                        "label": "Self-signed certificate"
+                                    },
+                                    {
+                                        "name": "rejectUnauthorized",
+                                        "type": "boolean",
+                                        "label": "Reject connections that are using unverified (self-signed) certificates",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "followRedirect",
+                                        "type": "boolean",
+                                        "label": "Follow redirect",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "useQuerystring",
+                                        "type": "boolean",
+                                        "label": "Disable serialization of multiple same query string keys as arrays",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "gzip",
+                                        "type": "boolean",
+                                        "label": "Request compressed content",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "useMtls",
+                                        "type": "boolean",
+                                        "label": "Use Mutual TLS",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "contentType",
+                                        "type": "select",
+                                        "label": "Content type",
+                                        "validate": {
+                                            "enum": [
+                                                "text/plain",
+                                                "application/json",
+                                                "application/xml",
+                                                "text/xml",
+                                                "text/html",
+                                                "custom"
+                                            ]
+                                        }
+                                    },
+                                    {
+                                        "name": "data",
+                                        "type": "buffer",
+                                        "label": "Request content"
+                                    },
+                                    {
+                                        "name": "followAllRedirects",
+                                        "type": "boolean",
+                                        "label": "Follow all redirect",
+                                        "required": true
+                                    }
+                                ]
+                            }
+                        },
+                        {
+                            "id": 9,
+                            "module": "datastore:upsertRecord",
+                            "version": 1,
+                            "parameters": {
+                                "ds": "Pending_Approvals"
+                            },
+                            "mapper": {
+                                "key": "{{1.order}}",
+                                "status": "approved",
+                                "qbo_invoice_id": "{{5.Id}}",
+                                "square_order_id": "{{6.id}}",
+                                "hubspot_deal_id": "{{7.id}}",
+                                "approved_at": "{{now}}"
+                            },
+                            "metadata": {
+                                "designer": {
+                                    "x": 2400,
+                                    "y": 0,
+                                    "name": "9. Data Store: Update Status → Approved"
+                                },
+                                "restore": {},
+                                "expect": [
+                                    {
+                                        "name": "key",
+                                        "type": "text",
+                                        "label": "Key (Order Number)",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "status",
+                                        "type": "text",
+                                        "label": "Status"
+                                    },
+                                    {
+                                        "name": "qbo_invoice_id",
+                                        "type": "text",
+                                        "label": "QBO Invoice ID"
+                                    },
+                                    {
+                                        "name": "square_order_id",
+                                        "type": "text",
+                                        "label": "Square Order ID"
+                                    },
+                                    {
+                                        "name": "hubspot_deal_id",
+                                        "type": "text",
+                                        "label": "HubSpot Deal ID"
+                                    },
+                                    {
+                                        "name": "approved_at",
+                                        "type": "date",
+                                        "label": "Approved At"
+                                    }
+                                ]
+                            }
+                        },
+                        {
+                            "id": 10,
+                            "module": "datastore:addRecord",
+                            "version": 1,
+                            "parameters": {
+                                "ds": "Order_Log"
+                            },
+                            "mapper": {
+                                "key": "{{3.order_number}}",
+                                "order_number": "{{3.order_number}}",
+                                "customer_name": "{{3.customer_name}}",
+                                "customer_email": "{{3.customer_email}}",
+                                "customer_org": "{{3.customer_org}}",
+                                "is_penn_entity": "{{3.is_penn_entity}}",
+                                "requires_po": "{{3.requires_po}}",
+                                "payment_terms": "{{3.payment_terms}}",
+                                "subtotal": "{{3.subtotal}}",
+                                "tax": "{{3.tax}}",
+                                "delivery_fee": "{{3.delivery_fee}}",
+                                "total": "{{3.total}}",
+                                "gross_margin_pct": "{{3.gross_margin_pct}}",
+                                "delivery_date": "{{3.delivery_date}}",
+                                "delivery_time": "{{3.delivery_time}}",
+                                "delivery_address": "{{3.delivery_address}}",
+                                "qbo_invoice_id": "{{5.Id}}",
+                                "square_order_id": "{{6.id}}",
+                                "hubspot_deal_id": "{{7.id}}",
+                                "status": "confirmed",
+                                "created_at": "{{now}}"
+                            },
+                            "metadata": {
+                                "designer": {
+                                    "x": 2700,
+                                    "y": 0,
+                                    "name": "10. Data Store: Log to Order_Log"
+                                },
+                                "restore": {},
+                                "expect": [
+                                    {
+                                        "name": "key",
+                                        "type": "text",
+                                        "label": "Key (Order Number)",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "order_number",
+                                        "type": "text",
+                                        "label": "Order Number"
+                                    },
+                                    {
+                                        "name": "customer_name",
+                                        "type": "text",
+                                        "label": "Customer Name"
+                                    },
+                                    {
+                                        "name": "customer_email",
+                                        "type": "text",
+                                        "label": "Customer Email"
+                                    },
+                                    {
+                                        "name": "customer_org",
+                                        "type": "text",
+                                        "label": "Customer Org"
+                                    },
+                                    {
+                                        "name": "is_penn_entity",
+                                        "type": "boolean",
+                                        "label": "Is Penn Entity"
+                                    },
+                                    {
+                                        "name": "requires_po",
+                                        "type": "boolean",
+                                        "label": "Requires PO"
+                                    },
+                                    {
+                                        "name": "payment_terms",
+                                        "type": "text",
+                                        "label": "Payment Terms"
+                                    },
+                                    {
+                                        "name": "subtotal",
+                                        "type": "number",
+                                        "label": "Subtotal"
+                                    },
+                                    {
+                                        "name": "tax",
+                                        "type": "number",
+                                        "label": "Tax"
+                                    },
+                                    {
+                                        "name": "delivery_fee",
+                                        "type": "number",
+                                        "label": "Delivery Fee"
+                                    },
+                                    {
+                                        "name": "total",
+                                        "type": "number",
+                                        "label": "Total"
+                                    },
+                                    {
+                                        "name": "gross_margin_pct",
+                                        "type": "number",
+                                        "label": "Gross Margin %"
+                                    },
+                                    {
+                                        "name": "delivery_date",
+                                        "type": "date",
+                                        "label": "Delivery Date"
+                                    },
+                                    {
+                                        "name": "delivery_time",
+                                        "type": "text",
+                                        "label": "Delivery Time"
+                                    },
+                                    {
+                                        "name": "delivery_address",
+                                        "type": "text",
+                                        "label": "Delivery Address"
+                                    },
+                                    {
+                                        "name": "qbo_invoice_id",
+                                        "type": "text",
+                                        "label": "QBO Invoice ID"
+                                    },
+                                    {
+                                        "name": "square_order_id",
+                                        "type": "text",
+                                        "label": "Square Order ID"
+                                    },
+                                    {
+                                        "name": "hubspot_deal_id",
+                                        "type": "text",
+                                        "label": "HubSpot Deal ID"
+                                    },
+                                    {
+                                        "name": "status",
+                                        "type": "text",
+                                        "label": "Status"
+                                    },
+                                    {
+                                        "name": "created_at",
+                                        "type": "date",
+                                        "label": "Created At"
+                                    }
+                                ]
+                            }
+                        },
+                        {
+                            "id": 11,
+                            "module": "google-email:ActionSendAnEmail",
+                            "version": 2,
+                            "parameters": {},
+                            "mapper": {
+                                "to": "{{3.customer_email}}",
+                                "cc": "catering@elmerkury.com",
+                                "subject": "El Merkury Catering — Order Confirmed | {{3.order_number}}",
+                                "content": "<div style='font-family:Arial,sans-serif; max-width:600px; margin:0 auto;'><div style='background:#2d5016; padding:20px; text-align:center;'><h1 style='color:#fff; margin:0;'>El Merkury Catering</h1></div><div style='padding:20px;'><p>Hi {{3.customer_name}},</p><p>Thank you for your catering order! We've confirmed the following:</p><table border='1' cellpadding='8' cellspacing='0' style='border-collapse:collapse; width:100%; margin:16px 0;'><tr style='background:#f0f0f0;'><td><strong>Order Number</strong></td><td>{{3.order_number}}</td></tr><tr><td><strong>Delivery Date</strong></td><td>{{3.delivery_date}} at {{3.delivery_time}}</td></tr><tr><td><strong>Delivery Address</strong></td><td>{{3.delivery_address}}</td></tr><tr><td><strong>Total</strong></td><td>${{3.total}}</td></tr><tr><td><strong>Payment Terms</strong></td><td>{{3.payment_terms}}</td></tr></table>{{if(3.requires_po; \"<p><strong>Note:</strong> Your organization requires a Purchase Order. We have created a preliminary invoice and will finalize it once we receive your PO number. Please send the PO to <a href='mailto:catering@elmerkury.com'>catering@elmerkury.com</a>.</p>\"; \"<p>An invoice has been sent to your email with a secure payment link.</p>\")}}<p>If you have any questions or need to make changes, please reply to this email or contact us at <a href='mailto:catering@elmerkury.com'>catering@elmerkury.com</a>.</p><p>We look forward to serving you!</p><p style='margin-top:20px;'>— The El Merkury Team</p></div><div style='background:#f5f5f5; padding:12px 20px; text-align:center; font-size:12px; color:#888;'>El Merkury | Reading Terminal Market, Philadelphia PA | elmerkury.com</div></div>",
+                                "contentType": "html"
+                            },
+                            "metadata": {
+                                "designer": {
+                                    "x": 3000,
+                                    "y": 0,
+                                    "name": "11. Gmail: Send Customer Confirmation"
+                                },
+                                "restore": {},
+                                "expect": [
+                                    {
+                                        "name": "to",
+                                        "type": "text",
+                                        "label": "To",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "cc",
+                                        "type": "text",
+                                        "label": "CC"
+                                    },
+                                    {
+                                        "name": "subject",
+                                        "type": "text",
+                                        "label": "Subject",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "content",
+                                        "type": "text",
+                                        "label": "Content"
+                                    },
+                                    {
+                                        "name": "contentType",
+                                        "type": "select",
+                                        "label": "Content Type"
+                                    }
+                                ]
+                            }
+                        },
+                        {
+                            "id": 12,
+                            "module": "gateway:WebhookRespond",
+                            "version": 1,
+                            "parameters": {},
+                            "mapper": {
+                                "status": "200",
+                                "body": "<html><body style='font-family:Arial; text-align:center; padding:60px;'><h1 style='color:#2d5016;'>✅ Order Approved</h1><p>Order <strong>{{3.order_number}}</strong> has been confirmed.</p><p>Invoice created in QBO, KDS ticket sent to Square, deal logged in HubSpot.</p><p style='margin-top:30px;'><a href='YOUR_REACT_APP_URL/'>View in Dashboard</a></p></body></html>",
+                                "headers": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "text/html"
+                                    }
+                                ]
+                            },
+                            "metadata": {
+                                "designer": {
+                                    "x": 3300,
+                                    "y": 0,
+                                    "name": "12. Webhook Response: Approved Confirmation Page"
+                                },
+                                "restore": {},
+                                "expect": [
+                                    {
+                                        "name": "status",
+                                        "type": "uinteger",
+                                        "label": "Status",
+                                        "required": true,
+                                        "validate": {
+                                            "min": 100
+                                        }
+                                    },
+                                    {
+                                        "name": "body",
+                                        "type": "any",
+                                        "label": "Body"
+                                    },
+                                    {
+                                        "name": "headers",
+                                        "spec": [
+                                            {
+                                                "name": "key",
+                                                "type": "text",
+                                                "label": "Key"
+                                            },
+                                            {
+                                                "name": "value",
+                                                "type": "text",
+                                                "label": "Value"
+                                            }
+                                        ],
+                                        "type": "array",
+                                        "label": "Custom headers"
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "flow": [
+                        {
+                            "id": 13,
+                            "module": "datastore:upsertRecord",
+                            "version": 1,
+                            "parameters": {
+                                "ds": "Pending_Approvals"
+                            },
+                            "mapper": {
+                                "key": "{{1.order}}",
+                                "status": "editing"
+                            },
+                            "metadata": {
+                                "designer": {
+                                    "x": 1200,
+                                    "y": 300,
+                                    "name": "13. Data Store: Update Status → Editing"
+                                },
+                                "restore": {},
+                                "expect": [
+                                    {
+                                        "name": "key",
+                                        "type": "text",
+                                        "label": "Key (Order Number)",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "status",
+                                        "type": "text",
+                                        "label": "Status"
+                                    }
+                                ]
+                            },
+                            "filter": {
+                                "name": "EDIT",
+                                "conditions": [
+                                    [
+                                        {
+                                            "a": "{{1.action}}",
+                                            "b": "edit",
+                                            "o": "text:equal"
+                                        }
+                                    ],
+                                    [
+                                        {
+                                            "a": "{{1.token}}",
+                                            "b": "YOUR_APPROVAL_SHARED_SECRET",
+                                            "o": "text:equal"
+                                        }
+                                    ],
+                                    [
+                                        {
+                                            "a": "{{1.order}}",
+                                            "b": "^EM-\\d{8}-\\d{3}$",
+                                            "o": "text:pattern"
+                                        }
+                                    ],
+                                    [
+                                        {
+                                            "a": "{{2.status}}",
+                                            "b": "pending_review",
+                                            "o": "text:equal"
+                                        }
+                                    ],
+                                    [
+                                        {
+                                            "a": "{{1.method}}",
+                                            "b": "POST",
+                                            "o": "text:equal"
+                                        }
+                                    ]
+                                ]
+                            }
+                        },
+                        {
+                            "id": 14,
+                            "module": "gateway:WebhookRespond",
+                            "version": 1,
+                            "parameters": {},
+                            "mapper": {
+                                "status": "302",
+                                "body": "",
+                                "headers": [
+                                    {
+                                        "key": "Location",
+                                        "value": "YOUR_REACT_APP_URL/?view=editOrder&order={{1.order}}"
+                                    }
+                                ]
+                            },
+                            "metadata": {
+                                "designer": {
+                                    "x": 1500,
+                                    "y": 300,
+                                    "name": "14. Webhook Response: Redirect to Edit UI"
+                                },
+                                "restore": {},
+                                "expect": [
+                                    {
+                                        "name": "status",
+                                        "type": "uinteger",
+                                        "label": "Status",
+                                        "required": true,
+                                        "validate": {
+                                            "min": 100
+                                        }
+                                    },
+                                    {
+                                        "name": "body",
+                                        "type": "any",
+                                        "label": "Body"
+                                    },
+                                    {
+                                        "name": "headers",
+                                        "spec": [
+                                            {
+                                                "name": "key",
+                                                "type": "text",
+                                                "label": "Key"
+                                            },
+                                            {
+                                                "name": "value",
+                                                "type": "text",
+                                                "label": "Value"
+                                            }
+                                        ],
+                                        "type": "array",
+                                        "label": "Custom headers"
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "flow": [
+                        {
+                            "id": 15,
+                            "module": "datastore:upsertRecord",
+                            "version": 1,
+                            "parameters": {
+                                "ds": "Pending_Approvals"
+                            },
+                            "mapper": {
+                                "key": "{{1.order}}",
+                                "status": "rejected",
+                                "rejected_at": "{{now}}"
+                            },
+                            "metadata": {
+                                "designer": {
+                                    "x": 1200,
+                                    "y": 600,
+                                    "name": "15. Data Store: Update Status → Rejected"
+                                },
+                                "restore": {},
+                                "expect": [
+                                    {
+                                        "name": "key",
+                                        "type": "text",
+                                        "label": "Key (Order Number)",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "status",
+                                        "type": "text",
+                                        "label": "Status"
+                                    },
+                                    {
+                                        "name": "rejected_at",
+                                        "type": "date",
+                                        "label": "Rejected At"
+                                    }
+                                ]
+                            },
+                            "filter": {
+                                "name": "REJECT",
+                                "conditions": [
+                                    [
+                                        {
+                                            "a": "{{1.action}}",
+                                            "b": "reject",
+                                            "o": "text:equal"
+                                        }
+                                    ],
+                                    [
+                                        {
+                                            "a": "{{1.token}}",
+                                            "b": "YOUR_APPROVAL_SHARED_SECRET",
+                                            "o": "text:equal"
+                                        }
+                                    ],
+                                    [
+                                        {
+                                            "a": "{{1.order}}",
+                                            "b": "^EM-\\d{8}-\\d{3}$",
+                                            "o": "text:pattern"
+                                        }
+                                    ],
+                                    [
+                                        {
+                                            "a": "{{2.status}}",
+                                            "b": "pending_review",
+                                            "o": "text:equal"
+                                        }
+                                    ],
+                                    [
+                                        {
+                                            "a": "{{1.method}}",
+                                            "b": "POST",
+                                            "o": "text:equal"
+                                        }
+                                    ]
+                                ]
+                            }
+                        },
+                        {
+                            "id": 16,
+                            "module": "http:ActionSendData",
+                            "version": 3,
+                            "parameters": {
+                                "handleErrors": true
+                            },
+                            "mapper": {
+                                "ca": "",
+                                "qs": [],
+                                "url": "https://YOUR_SUPABASE_PROJECT.supabase.co/rest/v1/order_audit_log",
+                                "data": "{\"order_number\": \"{{3.order_number}}\", \"action\": \"rejected\", \"customer_name\": \"{{3.customer_name}}\", \"customer_org\": \"{{3.customer_org}}\", \"customer_email\": \"{{3.customer_email}}\", \"total\": {{3.total}}, \"rejected_at\": \"{{now}}\"}",
+                                "gzip": true,
+                                "method": "post",
+                                "headers": [
+                                    {
+                                        "name": "Content-Type",
+                                        "value": "application/json"
+                                    },
+                                    {
+                                        "name": "apikey",
+                                        "value": "YOUR_SUPABASE_SERVICE_ROLE_KEY"
+                                    },
+                                    {
+                                        "name": "Authorization",
+                                        "value": "Bearer YOUR_SUPABASE_SERVICE_ROLE_KEY"
+                                    },
+                                    {
+                                        "name": "Prefer",
+                                        "value": "return=minimal"
+                                    }
+                                ],
+                                "timeout": "30",
+                                "useMtls": false,
+                                "bodyType": "raw",
+                                "contentType": "application/json",
+                                "serializeUrl": false,
+                                "shareCookies": false,
+                                "parseResponse": true,
+                                "followRedirect": true,
+                                "useQuerystring": false,
+                                "followAllRedirects": false,
+                                "rejectUnauthorized": true
+                            },
+                            "metadata": {
+                                "designer": {
+                                    "x": 1500,
+                                    "y": 600,
+                                    "name": "16. Supabase: Log Rejection"
+                                },
+                                "restore": {
+                                    "expect": {
+                                        "qs": {
+                                            "mode": "chose"
+                                        },
+                                        "method": {
+                                            "mode": "chose",
+                                            "label": "POST"
+                                        },
+                                        "headers": {
+                                            "mode": "chose",
+                                            "items": [
+                                                null,
+                                                null,
+                                                null,
+                                                null
+                                            ]
+                                        },
+                                        "bodyType": {
+                                            "label": "Raw"
+                                        },
+                                        "contentType": {
+                                            "label": "JSON (application/json)"
+                                        }
+                                    }
+                                },
+                                "parameters": [
+                                    {
+                                        "name": "handleErrors",
+                                        "type": "boolean",
+                                        "label": "Evaluate all states as errors (except for 2xx and 3xx )",
+                                        "required": true
+                                    }
+                                ],
+                                "expect": [
+                                    {
+                                        "name": "url",
+                                        "type": "url",
+                                        "label": "URL",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "method",
+                                        "type": "select",
+                                        "label": "Method",
+                                        "required": true,
+                                        "validate": {
+                                            "enum": [
+                                                "get",
+                                                "head",
+                                                "post",
+                                                "put",
+                                                "patch",
+                                                "delete",
+                                                "options"
+                                            ]
+                                        }
+                                    },
+                                    {
+                                        "name": "headers",
+                                        "spec": [
+                                            {
+                                                "name": "name",
+                                                "type": "text",
+                                                "label": "Name",
+                                                "required": true
+                                            },
+                                            {
+                                                "name": "value",
+                                                "type": "text",
+                                                "label": "Value"
+                                            }
+                                        ],
+                                        "type": "array",
+                                        "label": "Headers"
+                                    },
+                                    {
+                                        "name": "qs",
+                                        "spec": [
+                                            {
+                                                "name": "name",
+                                                "type": "text",
+                                                "label": "Name",
+                                                "required": true
+                                            },
+                                            {
+                                                "name": "value",
+                                                "type": "text",
+                                                "label": "Value"
+                                            }
+                                        ],
+                                        "type": "array",
+                                        "label": "Query String"
+                                    },
+                                    {
+                                        "name": "bodyType",
+                                        "type": "select",
+                                        "label": "Body type",
+                                        "validate": {
+                                            "enum": [
+                                                "raw",
+                                                "x_www_form_urlencoded",
+                                                "multipart_form_data"
+                                            ]
+                                        }
+                                    },
+                                    {
+                                        "name": "parseResponse",
+                                        "type": "boolean",
+                                        "label": "Parse response",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "timeout",
+                                        "type": "uinteger",
+                                        "label": "Timeout",
+                                        "validate": {
+                                            "max": 300,
+                                            "min": 1
+                                        }
+                                    },
+                                    {
+                                        "name": "shareCookies",
+                                        "type": "boolean",
+                                        "label": "Share cookies with other HTTP modules",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "ca",
+                                        "type": "cert",
+                                        "label": "Self-signed certificate"
+                                    },
+                                    {
+                                        "name": "rejectUnauthorized",
+                                        "type": "boolean",
+                                        "label": "Reject connections that are using unverified (self-signed) certificates",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "followRedirect",
+                                        "type": "boolean",
+                                        "label": "Follow redirect",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "useQuerystring",
+                                        "type": "boolean",
+                                        "label": "Disable serialization of multiple same query string keys as arrays",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "gzip",
+                                        "type": "boolean",
+                                        "label": "Request compressed content",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "useMtls",
+                                        "type": "boolean",
+                                        "label": "Use Mutual TLS",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "contentType",
+                                        "type": "select",
+                                        "label": "Content type",
+                                        "validate": {
+                                            "enum": [
+                                                "text/plain",
+                                                "application/json",
+                                                "application/xml",
+                                                "text/xml",
+                                                "text/html",
+                                                "custom"
+                                            ]
+                                        }
+                                    },
+                                    {
+                                        "name": "data",
+                                        "type": "buffer",
+                                        "label": "Request content"
+                                    },
+                                    {
+                                        "name": "followAllRedirects",
+                                        "type": "boolean",
+                                        "label": "Follow all redirect",
+                                        "required": true
+                                    }
+                                ]
+                            }
+                        },
+                        {
+                            "id": 17,
+                            "module": "google-email:ActionSendAnEmail",
+                            "version": 2,
+                            "parameters": {},
+                            "mapper": {
+                                "to": "{{3.customer_email}}",
+                                "cc": "catering@elmerkury.com",
+                                "subject": "El Merkury Catering — Update on Your Request",
+                                "content": "<div style='font-family:Arial,sans-serif; max-width:600px; margin:0 auto;'><div style='background:#2d5016; padding:20px; text-align:center;'><h1 style='color:#fff; margin:0;'>El Merkury Catering</h1></div><div style='padding:20px;'><p>Hi {{3.customer_name}},</p><p>Thank you for reaching out about catering for {{3.delivery_date}}. Unfortunately, we're unable to accommodate this request at this time.</p><p>We'd love to help you with a future event. Please don't hesitate to reach out to us at <a href='mailto:catering@elmerkury.com'>catering@elmerkury.com</a> and we'll work with you to find a solution.</p><p style='margin-top:20px;'>— The El Merkury Team</p></div><div style='background:#f5f5f5; padding:12px 20px; text-align:center; font-size:12px; color:#888;'>El Merkury | Reading Terminal Market, Philadelphia PA | elmerkury.com</div></div>",
+                                "contentType": "html"
+                            },
+                            "metadata": {
+                                "designer": {
+                                    "x": 1800,
+                                    "y": 600,
+                                    "name": "17. Gmail: Send Polite Decline to Customer"
+                                },
+                                "restore": {},
+                                "expect": [
+                                    {
+                                        "name": "to",
+                                        "type": "text",
+                                        "label": "To",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "cc",
+                                        "type": "text",
+                                        "label": "CC"
+                                    },
+                                    {
+                                        "name": "subject",
+                                        "type": "text",
+                                        "label": "Subject",
+                                        "required": true
+                                    },
+                                    {
+                                        "name": "content",
+                                        "type": "text",
+                                        "label": "Content"
+                                    },
+                                    {
+                                        "name": "contentType",
+                                        "type": "select",
+                                        "label": "Content Type"
+                                    }
+                                ]
+                            }
+                        },
+                        {
+                            "id": 18,
+                            "module": "gateway:WebhookRespond",
+                            "version": 1,
+                            "parameters": {},
+                            "mapper": {
+                                "status": "200",
+                                "body": "<html><body style='font-family:Arial; text-align:center; padding:60px;'><h1 style='color:#c0392b;'>❌ Order Rejected</h1><p>Order <strong>{{3.order_number}}</strong> has been declined.</p><p>A polite notification has been sent to {{3.customer_name}}.</p><p style='margin-top:30px;'><a href='YOUR_REACT_APP_URL/orders'>Back to Dashboard</a></p></body></html>",
+                                "headers": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "text/html"
+                                    }
+                                ]
+                            },
+                            "metadata": {
+                                "designer": {
+                                    "x": 2100,
+                                    "y": 600,
+                                    "name": "18. Webhook Response: Rejected Confirmation Page"
+                                },
+                                "restore": {},
+                                "expect": [
+                                    {
+                                        "name": "status",
+                                        "type": "uinteger",
+                                        "label": "Status",
+                                        "required": true,
+                                        "validate": {
+                                            "min": 100
+                                        }
+                                    },
+                                    {
+                                        "name": "body",
+                                        "type": "any",
+                                        "label": "Body"
+                                    },
+                                    {
+                                        "name": "headers",
+                                        "spec": [
+                                            {
+                                                "name": "key",
+                                                "type": "text",
+                                                "label": "Key"
+                                            },
+                                            {
+                                                "name": "value",
+                                                "type": "text",
+                                                "label": "Value"
+                                            }
+                                        ],
+                                        "type": "array",
+                                        "label": "Custom headers"
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "flow": [
+                        {
+                            "id": 19,
+                            "module": "gateway:WebhookRespond",
+                            "version": 1,
+                            "parameters": {},
+                            "filter": {
+                                "name": "REVIEW",
+                                "conditions": [
+                                    [
+                                        {
+                                            "a": "{{1.action}}",
+                                            "b": "review",
+                                            "o": "text:equal"
+                                        }
+                                    ],
+                                    [
+                                        {
+                                            "a": "{{1.token}}",
+                                            "b": "YOUR_APPROVAL_SHARED_SECRET",
+                                            "o": "text:equal"
+                                        }
+                                    ],
+                                    [
+                                        {
+                                            "a": "{{1.order}}",
+                                            "b": "^EM-\\d{8}-\\d{3}$",
+                                            "o": "text:pattern"
+                                        }
+                                    ],
+                                    [
+                                        {
+                                            "a": "{{2.status}}",
+                                            "b": "pending_review",
+                                            "o": "text:equal"
+                                        }
+                                    ],
+                                    [
+                                        {
+                                            "a": "{{1.method}}",
+                                            "b": "GET",
+                                            "o": "text:equal"
+                                        }
+                                    ]
+                                ]
+                            },
+                            "mapper": {
+                                "status": "200",
+                                "body": "<html><head><meta name='robots' content='noindex'></head><body style='font-family:Arial; max-width:640px; margin:40px auto; padding:0 20px;'><h1 style='color:#2d5016;'>Confirm action for {{1.order}}</h1><p>Customer: <strong>{{stripHTML(3.customer_name)}}</strong> ({{stripHTML(3.customer_org)}})<br>Delivery: {{stripHTML(3.delivery_date)}} at {{stripHTML(3.delivery_time)}}<br>Total: <strong>${{3.total}}</strong> &middot; Gross margin: {{3.gross_margin_pct}}%</p><p style='color:#666;'>Nothing has been sent to QuickBooks, Square or the customer yet. Choose an action below to commit it.</p><div style='margin:36px 0;'><form method=\"POST\" action=\"YOUR_MAKE_WEBHOOK_APPROVE_URL\" style=\"display:inline;\"><input type=\"hidden\" name=\"order\" value=\"{{1.order}}\"><input type=\"hidden\" name=\"token\" value=\"YOUR_APPROVAL_SHARED_SECRET\"><input type=\"hidden\" name=\"action\" value=\"approve\"><button type=\"submit\" style=\"display:inline-block; padding:14px 28px; margin:0 8px; font-size:16px; font-weight:bold; color:#fff; border:0; border-radius:6px; cursor:pointer; background:#2d7a2d;\">&#10003; APPROVE</button></form><form method=\"POST\" action=\"YOUR_MAKE_WEBHOOK_APPROVE_URL\" style=\"display:inline;\"><input type=\"hidden\" name=\"order\" value=\"{{1.order}}\"><input type=\"hidden\" name=\"token\" value=\"YOUR_APPROVAL_SHARED_SECRET\"><input type=\"hidden\" name=\"action\" value=\"edit\"><button type=\"submit\" style=\"display:inline-block; padding:14px 28px; margin:0 8px; font-size:16px; font-weight:bold; color:#fff; border:0; border-radius:6px; cursor:pointer; background:#b8860b;\">&#9998; EDIT</button></form><form method=\"POST\" action=\"YOUR_MAKE_WEBHOOK_APPROVE_URL\" style=\"display:inline;\"><input type=\"hidden\" name=\"order\" value=\"{{1.order}}\"><input type=\"hidden\" name=\"token\" value=\"YOUR_APPROVAL_SHARED_SECRET\"><input type=\"hidden\" name=\"action\" value=\"reject\"><button type=\"submit\" style=\"display:inline-block; padding:14px 28px; margin:0 8px; font-size:16px; font-weight:bold; color:#fff; border:0; border-radius:6px; cursor:pointer; background:#a33;\">&#10007; REJECT</button></form></div><p style='color:#888; font-size:12px;'>This order was parsed by Gemini from an external email. Verify the items and pricing above against the original message before approving.</p></body></html>",
+                                "headers": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "text/html"
+                                    }
+                                ]
+                            },
+                            "metadata": {
+                                "designer": {
+                                    "x": 900,
+                                    "y": 900,
+                                    "name": "19. Webhook Response: Human Confirmation Page (GET)"
+                                },
+                                "restore": {}
+                            }
+                        }
+                    ]
+                }
+            ]
+        }
+    ],
+    "metadata": {
+        "instant": true,
+        "version": 1,
+        "scenario": {
+            "roundtrips": 1,
+            "maxErrors": 3,
+            "autoCommit": true,
+            "autoCommitTriggerLast": true,
+            "sequential": false,
+            "slots": null,
+            "confidential": false,
+            "dataloss": false,
+            "dlq": false,
+            "freshVariables": false
+        },
+        "designer": {
+            "orphans": []
+        },
+        "zone": "us2.make.com",
+        "notes": [
+            {
+                "note": "SECURITY: this webhook performs irreversible actions (QBO invoice, Square KDS order, customer email). Before enabling, in the webhook settings turn ON 'Get request method' and 'Get request headers', and replace YOUR_APPROVAL_SHARED_SECRET everywhere with a long random string that matches WF1a. Approve/Edit/Reject only run on POST from the confirmation page; the emailed GET link is read-only."
+            }
+        ]
+    }
+}

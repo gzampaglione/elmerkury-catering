@@ -1,3 +1,6 @@
 # https://www.robotstxt.org/robotstxt.html
+# This deployment is an internal demo containing client and margin data.
+# It must not be indexed. Access control is enforced by Vercel Deployment
+# Protection; this file is defence in depth only.
 User-agent: *
-Disallow:
+Disallow: /

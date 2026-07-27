@@ -19,8 +19,8 @@ export const DUMMY_DATA = {
     ytdOrders: 15,
     avgOrderValue: 830,
     lastOrder: "October 7, 2025",
-    contactName: "Ashley Duchi",
-    contactEmail: "ashley@law.upenn.edu",
+    contactName: "Alex Rivera",
+    contactEmail: "a.rivera@law.example.edu",
     contactPhone: "(215) 555-1234",
     address: {
       line1: "3501 Sansom Street",
@@ -56,8 +56,8 @@ export const DUMMY_DATA = {
     ytdOrders: 8,
     avgOrderValue: 1100,
     lastOrder: "October 5, 2025",
-    contactName: "David Kim",
-    contactEmail: "dk@sig.com",
+    contactName: "Dana Klein",
+    contactEmail: "d.klein@sig.example.com",
     contactPhone: "(610) 555-9876",
     address: {
       line1: "123 Market Street",
@@ -94,7 +94,7 @@ export const DUMMY_DATA = {
     avgOrderValue: 850,
     lastOrder: "September 15, 2025",
     contactName: "Events Manager",
-    contactEmail: "events@manncenter.org",
+    contactEmail: "events@manncenter.example.org",
     contactPhone: "(215) 555-7890",
     address: {
       line1: "5201 Parkside Avenue",
@@ -330,7 +330,7 @@ export const DUMMY_DATA = {
     {
       orderNum: "12345678",
       customerName: "Penn Law",
-      contactEmail: "ashley@law.upenn.edu",
+      contactEmail: "a.rivera@law.example.edu",
       orderDate: "2025-10-08",
       deliveryDate: "2025-10-14",
       deliveryTime: "12:30 PM",
@@ -346,7 +346,7 @@ export const DUMMY_DATA = {
     {
       orderNum: "12345675",
       customerName: "Penn Wharton",
-      contactEmail: "events@wharton.upenn.edu",
+      contactEmail: "events@wharton.example.edu",
       orderDate: "2025-10-05",
       deliveryDate: "2025-10-16",
       deliveryTime: "11:00 AM",
@@ -362,7 +362,7 @@ export const DUMMY_DATA = {
     {
       orderNum: "12345672",
       customerName: "Penn Medicine",
-      contactEmail: "catering@pennmedicine.org",
+      contactEmail: "catering@pennmed.example.org",
       orderDate: "2025-10-02",
       deliveryDate: "2025-10-18",
       deliveryTime: "2:00 PM",
@@ -761,7 +761,7 @@ export const API_HELPERS = {
     {
       orderNum: "12345681",
       customerName: "SIG",
-      contactEmail: "dk@sig.com",
+      contactEmail: "d.klein@sig.example.com",
       orderDate: "2025-10-08 14:35",
       deliveryDate: "2025-10-12",
       deliveryTime: "11:00 AM",
@@ -774,7 +774,7 @@ export const API_HELPERS = {
     {
       orderNum: "12345682",
       customerName: "Comcast",
-      contactEmail: "events@comcast.com",
+      contactEmail: "events@comcast.example.com",
       orderDate: "2025-10-08 09:15",
       deliveryDate: "2025-10-15",
       deliveryTime: "12:30 PM",
@@ -788,7 +788,7 @@ export const API_HELPERS = {
     {
       orderNum: "12345683",
       customerName: "Temple University",
-      contactEmail: "catering@temple.edu",
+      contactEmail: "catering@temple.example.edu",
       orderDate: "2025-10-08 11:22",
       deliveryDate: "2025-10-13",
       deliveryTime: "1:00 PM",
@@ -801,7 +801,7 @@ export const API_HELPERS = {
     {
       orderNum: "12345684",
       customerName: "Jefferson Health",
-      contactEmail: "events@jefferson.edu",
+      contactEmail: "events@jefferson.example.edu",
       orderDate: "2025-10-07 16:45",
       deliveryDate: "2025-10-11",
       deliveryTime: "12:00 PM",
