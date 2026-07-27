@@ -1,0 +1,197 @@
+{
+    "name": "El Merkury - WF0 Square Catalog Sync (Every 12hrs)",
+    "flow": [
+        {
+            "id": 1,
+            "module": "builtin:BasicScheduler",
+            "version": 1,
+            "parameters": {},
+            "mapper": {},
+            "metadata": {
+                "designer": {
+                    "x": 0,
+                    "y": 300,
+                    "name": "Schedule: Every 12 Hours"
+                }
+            }
+        },
+        {
+            "id": 2,
+            "module": "square:apiCall",
+            "version": 1,
+            "parameters": {},
+            "mapper": {
+                "url": "/v2/catalog/list?types=ITEM",
+                "method": "get",
+                "headers": []
+            },
+            "metadata": {
+                "designer": {
+                    "x": 300,
+                    "y": 300,
+                    "name": "Square: List All Catalog Items"
+                },
+                "restore": {
+                    "expect": {
+                        "method": {
+                            "mode": "chose",
+                            "label": "GET"
+                        }
+                    }
+                },
+                "expect": [
+                    {
+                        "name": "url",
+                        "type": "text",
+                        "label": "URL",
+                        "required": true
+                    },
+                    {
+                        "name": "method",
+                        "type": "select",
+                        "label": "Method",
+                        "required": true
+                    },
+                    {
+                        "name": "headers",
+                        "spec": [
+                            {
+                                "name": "name",
+                                "type": "text",
+                                "label": "Name"
+                            },
+                            {
+                                "name": "value",
+                                "type": "text",
+                                "label": "Value"
+                            }
+                        ],
+                        "type": "array",
+                        "label": "Headers"
+                    }
+                ]
+            }
+        },
+        {
+            "id": 3,
+            "module": "builtin:BasicFeeder",
+            "version": 1,
+            "parameters": {},
+            "mapper": {
+                "array": "{{2.data.objects}}"
+            },
+            "metadata": {
+                "designer": {
+                    "x": 600,
+                    "y": 300,
+                    "name": "Iterator: Each Catalog Item"
+                },
+                "restore": {},
+                "expect": [
+                    {
+                        "name": "array",
+                        "type": "array",
+                        "label": "Array",
+                        "required": true
+                    }
+                ]
+            }
+        },
+        {
+            "id": 4,
+            "module": "datastore:upsertRecord",
+            "version": 1,
+            "parameters": {
+                "ds": "Square_Catalog"
+            },
+            "mapper": {
+                "key": "{{3.id}}",
+                "square_item_id": "{{3.id}}",
+                "item_name": "{{3.item_data.name}}",
+                "description": "{{3.item_data.description}}",
+                "category": "{{3.item_data.category_id}}",
+                "variations": "{{3.item_data.variations}}",
+                "price_cents": "{{3.item_data.variations[1].item_variation_data.price_money.amount}}",
+                "is_deleted": "{{3.is_deleted}}",
+                "last_synced": "{{now}}"
+            },
+            "metadata": {
+                "designer": {
+                    "x": 900,
+                    "y": 300,
+                    "name": "Data Store: Upsert Catalog Item"
+                },
+                "restore": {},
+                "expect": [
+                    {
+                        "name": "key",
+                        "type": "text",
+                        "label": "Key (Square Item ID)",
+                        "required": true
+                    },
+                    {
+                        "name": "square_item_id",
+                        "type": "text",
+                        "label": "Square Item ID"
+                    },
+                    {
+                        "name": "item_name",
+                        "type": "text",
+                        "label": "Item Name"
+                    },
+                    {
+                        "name": "description",
+                        "type": "text",
+                        "label": "Description"
+                    },
+                    {
+                        "name": "category",
+                        "type": "text",
+                        "label": "Category"
+                    },
+                    {
+                        "name": "variations",
+                        "type": "text",
+                        "label": "Variations (JSON)"
+                    },
+                    {
+                        "name": "price_cents",
+                        "type": "number",
+                        "label": "Price (cents)"
+                    },
+                    {
+                        "name": "is_deleted",
+                        "type": "boolean",
+                        "label": "Is Deleted"
+                    },
+                    {
+                        "name": "last_synced",
+                        "type": "date",
+                        "label": "Last Synced"
+                    }
+                ]
+            }
+        }
+    ],
+    "metadata": {
+        "instant": false,
+        "version": 1,
+        "scenario": {
+            "roundtrips": 1,
+            "maxErrors": 3,
+            "autoCommit": true,
+            "autoCommitTriggerLast": true,
+            "sequential": false,
+            "slots": null,
+            "confidential": false,
+            "dataloss": false,
+            "dlq": false,
+            "freshVariables": false
+        },
+        "designer": {
+            "orphans": []
+        },
+        "zone": "us2.make.com",
+        "notes": []
+    }
+}
