@@ -15,6 +15,12 @@
 # inventory contains revenue, EBITDA and margin figures that must not be pushed.
 El Merkury Catering - Workflow Inventory.md
 
+# Blueprints with real secrets substituted in, ready to import into Make.com.
+# The committed copies under make-blueprints/ keep YOUR_* placeholders only.
+make-blueprints/local/
+*.secret
+*.secret.*
+
 # misc
 .DS_Store
 .env.local
