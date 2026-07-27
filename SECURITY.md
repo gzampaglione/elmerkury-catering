@@ -16,17 +16,23 @@ someone sees fake data.
 
 ## Required setup — the blueprints will not work correctly without these
 
-### 1. Generate the approval shared secret
+### 1. Generate the approval shared secret — done
 
 Every state-changing route in `workflow-1b-approval-handler.json` is gated on a
-shared secret. Generate one:
+shared secret. This has already been generated (32 random bytes, hex-encoded)
+and substituted into both blueprints.
 
-```bash
-openssl rand -hex 32
-```
+**Import the copies in `make-blueprints/local/`, not the ones committed here.**
+The committed blueprints keep `YOUR_APPROVAL_SHARED_SECRET` on purpose, because
+this repository is public. `make-blueprints/local/` is gitignored and holds:
 
-Replace **`YOUR_APPROVAL_SHARED_SECRET`** with that value in *both* blueprints
-(WF1a builds the link, WF1b validates it). They must match exactly.
+- `workflow-1-email-order-processing.json` — builds the review link
+- `workflow-1b-approval-handler.json` — validates it
+- `SECRET.txt` — the value itself, if you need it again
+
+The two must always carry the same value. To rotate it, replace it in both
+Make.com scenarios at once; review emails already sent will stop working, which
+is the intended behaviour.
 
 ### 2. Turn on the webhook's method and header parsing
 
